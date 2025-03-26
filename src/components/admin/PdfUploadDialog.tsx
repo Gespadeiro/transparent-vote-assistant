@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { FileUp, Upload, X, FilePdf } from "lucide-react";
+import { FileUp, Upload, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -135,7 +135,7 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
             {selectedFile ? (
               <Card className="p-3 relative">
                 <div className="flex items-center">
-                  <FilePdf className="h-8 w-8 text-red-500 mr-2" />
+                  <FileText className="h-8 w-8 text-red-500 mr-2" />
                   <div className="overflow-hidden">
                     <p className="font-medium truncate">{selectedFile.name}</p>
                     <p className="text-xs text-gray-500">
