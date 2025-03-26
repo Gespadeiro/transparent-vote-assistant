@@ -40,15 +40,19 @@ import Navbar from "@/components/Navbar";
 import {
   Shield,
   FilePlus,
+  FileText,
+  Upload,
   Edit,
   Trash2,
   HelpCircle,
   Save,
   PlusCircle,
+  FileUp,
 } from "lucide-react";
 import ElectoralPlanForm from "@/components/admin/ElectoralPlanForm";
 import QuizQuestionForm from "@/components/admin/QuizQuestionForm";
 import AdminAuth from "@/components/admin/AdminAuth";
+import PdfUploadDialog from "@/components/admin/PdfUploadDialog";
 
 // Mock data for demonstration purposes
 const MOCK_PLANS = [
@@ -59,6 +63,7 @@ const MOCK_PLANS = [
     summary: "Comprehensive healthcare reform and climate action plan.",
     topics: ["Healthcare", "Environment", "Education"],
     proposals: "Detailed proposals for universal healthcare and renewable energy investments.",
+    originalPdf: null,
   },
   {
     id: 2,
@@ -67,6 +72,7 @@ const MOCK_PLANS = [
     summary: "Tax reform and small government initiatives.",
     topics: ["Economy", "Defense", "Immigration"],
     proposals: "Proposals for tax cuts and strengthening border security.",
+    originalPdf: null,
   },
 ];
 
@@ -99,6 +105,7 @@ const Admin = () => {
   const [editingPlan, setEditingPlan] = useState<any>(null);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("electoral-plans");
+  const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
 
   // Authentication handler
   const handleAuthentication = (success: boolean) => {
@@ -137,6 +144,16 @@ const Admin = () => {
   const handleDeletePlan = (id: number) => {
     setElectoralPlans(electoralPlans.filter((plan) => plan.id !== id));
     toast.success("Electoral plan deleted successfully");
+  };
+
+  // PDF processing handler
+  const handlePdfProcessed = (data: any) => {
+    const newPlan = {
+      ...data,
+      id: Date.now(),
+    };
+    
+    setElectoralPlans([...electoralPlans, newPlan]);
   };
 
   // Quiz question handlers
@@ -206,10 +223,20 @@ const Admin = () => {
                 <TabsContent value="electoral-plans">
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold">Electoral Plans</h2>
-                    <Button onClick={() => setEditingPlan({})} className="flex items-center gap-2">
-                      <FilePlus size={16} />
-                      Add New Plan
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => setIsPdfDialogOpen(true)} 
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <FileUp size={16} />
+                        Upload PDF
+                      </Button>
+                      <Button onClick={() => setEditingPlan({})} className="flex items-center gap-2">
+                        <FilePlus size={16} />
+                        Add Manually
+                      </Button>
+                    </div>
                   </div>
 
                   {editingPlan ? (
@@ -226,6 +253,7 @@ const Admin = () => {
                             <TableHead>Candidate</TableHead>
                             <TableHead>Party</TableHead>
                             <TableHead>Summary</TableHead>
+                            <TableHead>Source</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -235,6 +263,16 @@ const Admin = () => {
                               <TableCell className="font-medium">{plan.candidateName}</TableCell>
                               <TableCell>{plan.party}</TableCell>
                               <TableCell className="max-w-md truncate">{plan.summary}</TableCell>
+                              <TableCell>
+                                {plan.originalPdf ? (
+                                  <div className="flex items-center gap-1 text-xs">
+                                    <FileText size={14} className="text-red-500" />
+                                    {plan.originalPdf}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">Manual entry</span>
+                                )}
+                              </TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
                                   <Button
@@ -350,6 +388,12 @@ const Admin = () => {
           )}
         </div>
       </section>
+
+      <PdfUploadDialog 
+        open={isPdfDialogOpen}
+        onOpenChange={setIsPdfDialogOpen}
+        onPdfProcessed={handlePdfProcessed}
+      />
     </div>
   );
 };
