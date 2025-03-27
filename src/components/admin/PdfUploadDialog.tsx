@@ -58,49 +58,89 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
           // Here we would have the actual PDF content extraction
           // For now, let's simulate the extraction with a timeout
           setTimeout(() => {
-            // Simulate extracted content - in a real implementation 
-            // this would come from an API or edge function that parses the PDF
-            const mockedProposals = `Propostas Eleitorais extraídas de ${file.name}:
-            
-1. Plano de Desenvolvimento Económico
-   - Criação de novos postos de trabalho através de investimento em infraestruturas
-   - Redução de impostos para pequenas empresas em 5%
-   - Implementação de programas de requalificação profissional
-   - Criação de zonas económicas especiais nas regiões do interior
-   - Incentivos fiscais para empresas que contratem jovens até aos 30 anos
-   - Redução da burocracia para abertura de novas empresas
+            // Enhanced extraction with more detailed content simulation
+            // This would be replaced with actual PDF parsing in production
+            const mockedProposals = `# Plano Eleitoral Detalhado extraído de ${file.name}
 
-2. Iniciativa de Saúde
-   - Expansão da cobertura para cuidados preventivos
-   - Redução dos custos dos medicamentos prescritos
-   - Financiamento de unidades de saúde em zonas rurais
-   - Contratação de mais 1.500 profissionais de saúde para o SNS
-   - Redução das listas de espera em 30% nos próximos dois anos
-   - Modernização dos equipamentos hospitalares em todo o país
+## 1. Política Económica e Finanças
+- Redução progressiva do IRC em 2 pontos percentuais ao longo de 4 anos para estimular o investimento empresarial
+- Criação de um programa de incentivos fiscais para empresas que se estabeleçam em regiões de baixa densidade populacional, com isenção de 50% do IRC nos primeiros 3 anos
+- Implementação de um sistema de microcrédito para startups tecnológicas com taxas de juro bonificadas
+- Redução da despesa pública em 5% através da digitalização da administração pública
+- Revisão completa do sistema fiscal para simplificação e combate à evasão fiscal
+- Criação de um fundo soberano nacional com receitas extraordinárias do Estado para investimento em setores estratégicos
+- Programa de apoio à internacionalização das PMEs portuguesas com linha de crédito específica de 500 milhões de euros
 
-3. Proteção Ambiental
-   - Aumento do investimento em energias renováveis
-   - Implementação de controlos mais rigorosos sobre a poluição
-   - Criação de programas de conservação para terrenos públicos
-   - Desenvolvimento de um plano nacional para a neutralidade carbónica até 2045
-   - Incentivos à utilização de transportes públicos e veículos elétricos
-   - Proteção das áreas naturais protegidas e expansão da área florestal
+## 2. Emprego e Segurança Social
+- Redução da taxa contributiva para a Segurança Social para trabalhadores até aos 30 anos durante os primeiros 3 anos de contrato
+- Criação de programas de requalificação profissional em áreas digitais para trabalhadores de setores em transformação tecnológica
+- Implementação de um sistema de quotas para contratação de pessoas com mais de 55 anos em empresas com mais de 250 trabalhadores
+- Reforço da fiscalização do trabalho não declarado com aumento de 30% dos inspetores da ACT
+- Reforma do sistema de pensões com valorização dos anos contributivos e atualização das pensões de acordo com a inflação real
+- Introdução de um sistema de "flexisegurança" que permita maior mobilidade laboral com garantias de proteção social
 
-4. Reforma Educativa
-   - Aumento dos salários dos professores
-   - Modernização das infraestruturas escolares
-   - Expansão dos programas de educação pré-escolar
-   - Revisão curricular focada em competências digitais e pensamento crítico
-   - Redução do número de alunos por turma para máximo de 20
-   - Programa de requalificação digital para todos os estabelecimentos de ensino
+## 3. Saúde e Bem-estar
+- Reforço da capacidade do SNS com contratação de 5.000 profissionais, incluindo 1.000 médicos de família
+- Redução das listas de espera em 50% através de planos específicos para cada especialidade com avaliação trimestral
+- Criação de 20 novas Unidades de Saúde Familiar distribuídas pelo território nacional, com foco em áreas com menor cobertura
+- Digitalização completa do sistema de saúde com implementação de plataforma única de acesso a serviços médicos
+- Reforço do investimento em equipamentos hospitalares em 300 milhões de euros nos próximos 4 anos
+- Promoção de programas de prevenção de doenças crónicas com foco na obesidade, diabetes e doenças cardiovasculares
+- Implementação de um programa nacional de saúde mental com criação de equipas multidisciplinares em cada capital de distrito
+- Criação de um programa de cuidados continuados e paliativos com aumento de 2.000 camas na rede nacional
 
-5. Políticas de Habitação
-   - Construção de 10.000 novas habitações a preços acessíveis
-   - Regulação mais rigorosa do mercado de arrendamento
-   - Incentivos fiscais para renovação de imóveis degradados nos centros urbanos
-   - Programa especial de apoio à primeira habitação para jovens
-   - Limitação da especulação imobiliária em zonas de alta pressão habitacional
-   - Revitalização de zonas habitacionais degradadas`;
+## 4. Educação e Investigação
+- Redução do número de alunos por turma para máximo de 20 no ensino básico e 22 no ensino secundário
+- Requalificação de 200 escolas públicas com investimento em eficiência energética e digitalização
+- Reforma curricular com reforço das competências digitais, pensamento crítico e educação financeira
+- Valorização da carreira docente com revisão do estatuto e progressões mais rápidas para atrair novos professores
+- Aumento do financiamento ao ensino superior em 0,3% do PIB nos próximos 4 anos
+- Criação de um programa nacional de bolsas de mérito para estudantes do ensino superior
+- Reforço da ligação universidade-empresa com criação de centros de inovação em cada universidade pública
+- Aumento do investimento em I&D para 3% do PIB até 2027, com 1,5% para investimento público
+
+## 5. Habitação e Ordenamento do Território
+- Construção de 25.000 habitações a custos acessíveis em 4 anos, através de parcerias público-privadas
+- Reabilitação urbana com incentivos fiscais para recuperação de imóveis degradados nos centros históricos
+- Limitação do alojamento local em zonas de pressão urbanística a 10% dos imóveis disponíveis
+- Programa de apoio ao arrendamento jovem com subsídio direto até 30% do valor da renda para menores de 35 anos
+- Simplificação dos processos de licenciamento urbanístico com prazos máximos de resposta de 60 dias
+- Implementação de uma estratégia nacional para combate à desertificação do interior com pacote de incentivos à fixação
+
+## 6. Ambiente e Sustentabilidade
+- Investimento de 2 mil milhões de euros em energias renováveis até 2026, com foco no hidrogénio verde e solar
+- Programa de descarbonização da indústria com incentivos fiscais para adoção de tecnologias limpas
+- Expansão da rede de transportes públicos nas áreas metropolitanas com criação de 100km de novas linhas
+- Reflorestação de 100 mil hectares com espécies autóctones resistentes a incêndios
+- Implementação de um plano nacional de despoluição dos rios com metas específicas por bacia hidrográfica
+- Criação de 10 novas áreas protegidas marinhas ao longo da costa portuguesa
+- Promoção da economia circular com redução de 50% do uso de plásticos descartáveis até 2026
+- Investimento na gestão da água com modernização de infraestruturas e redução de perdas em 40%
+
+## 7. Segurança e Justiça
+- Reforço dos efetivos das forças de segurança com recrutamento de 3.000 novos agentes
+- Modernização do equipamento das polícias com investimento de 200 milhões de euros
+- Reforma do sistema judicial para redução dos prazos processuais em 40%
+- Criação de tribunais especializados em matéria económica nas principais comarcas
+- Reforço do combate à corrupção com criação de equipas especializadas
+- Implementação de um sistema nacional integrado de videovigilância em espaços públicos críticos
+- Reforma do sistema prisional com foco na reinserção social e redução da reincidência
+
+## 8. Reforma do Estado e Administração Pública
+- Descentralização de competências para municípios com transferência de recursos financeiros adequados
+- Digitalização de 95% dos serviços públicos até 2026
+- Redução de níveis hierárquicos na administração e simplificação de processos burocráticos
+- Implementação de um sistema de avaliação de desempenho efetivo para funcionários públicos
+- Criação de centros de competências partilhados para várias entidades públicas
+- Reforma do modelo de governação das empresas públicas com critérios de mérito e transparência
+
+## 9. Cultura e Património
+- Aumento do orçamento para a cultura para 1% do Orçamento do Estado até 2026
+- Criação de uma rede nacional de residências artísticas em todas as capitais de distrito
+- Programa de digitalização do património cultural português com acesso universal online
+- Apoio à internacionalização das indústrias criativas portuguesas com foco no audiovisual
+- Recuperação de 50 monumentos históricos com investimento público-privado
+- Implementação de um programa de literacia cultural nas escolas básicas e secundárias`;
             
             setExtractedProposals(mockedProposals);
             setExtractingContent(false);
@@ -141,7 +181,6 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
         candidate_name: candidateName,
         party: party,
         summary: `Plano eleitoral para ${candidateName} (${party})`,
-        topics: ["Economia", "Saúde", "Ambiente", "Educação", "Habitação"],
         proposals: extractedProposals, // Use the extracted proposals
         original_pdf: selectedFile.name
       };

@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -125,6 +126,18 @@ function extractTopicsFromQuery(query) {
   return topics.filter(topic => lowerQuery.includes(topic));
 }
 
+async function generateFallbackFromElectoralPlans(query, partyFilter) {
+  // Use either the specific party filter or return general statements
+  const partyKey = partyFilter && partyFilter.length > 0 ? partyFilter[0].toLowerCase() : "geral";
+  
+  // Return the appropriate fallback statements based on the party
+  if (fallbackResponses[partyKey]) {
+    return fallbackResponses[partyKey];
+  }
+  
+  return fallbackResponses["geral"];
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -185,18 +198,27 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "gpt-4o-mini", // Using a more affordable model with good capabilities
           messages: [
-            // Add a custom system message with electoral plan context
+            // Enhanced system message with more detailed instructions
             {
               role: "system",
-              content: `Você é um assistente especializado em política portuguesa que responde com base em informações detalhadas sobre planos eleitorais. Analise cuidadosamente as informações disponíveis${candidateFilter ? ' sobre os candidatos/partidos especificados' : ''}, incluindo propostas detalhadas e resumos. 
+              content: `Você é um assistente especializado em política portuguesa que responde com base em informações detalhadas sobre planos eleitorais. Sua função é fornecer análises abrangentes e detalhadas das propostas políticas, ajudando os eleitores a compreenderem claramente as posições dos partidos e candidatos.
+
+Quando solicitado, você deve:
+1. Analisar em profundidade as informações disponíveis, especialmente as PROPOSTAS DETALHADAS de cada plano
+2. Organizar sua resposta por temas relevantes (economia, saúde, educação, etc.)
+3. Apresentar as propostas concretas com números e metas específicas quando disponíveis
+4. Comparar diferentes posições políticas de forma equilibrada e imparcial
+5. Explicar potenciais impactos das propostas na sociedade e economia
+
+${candidateFilter ? 'Foque especificamente nos candidatos/partidos especificados, fornecendo o máximo de detalhes sobre suas propostas.' : 'Forneça uma visão abrangente de todos os planos disponíveis, destacando as principais diferenças entre eles.'}
 
 ${topicsFromQuery.length > 0 ? `Foque especificamente nos seguintes tópicos: ${topicsFromQuery.join(', ')}.` : ''}
 
-Aqui estão os planos eleitorais disponíveis, incluindo suas propostas detalhadas:
+Aqui estão os planos eleitorais disponíveis, com suas propostas detalhadas:
 
 ${planContext}
 
-Utilize TODAS as informações disponíveis (especialmente as PROPOSTAS DETALHADAS) para responder às perguntas de forma completa e abrangente. Quando perguntado sobre um candidato ou partido específico, forneça uma análise aprofundada das suas propostas. Não limite a resposta apenas ao resumo geral. Se não houver informações suficientes, indique claramente o que está em falta. Responda sempre em português europeu formal.`
+Não se limite a resumir o conteúdo. Analise criticamente as propostas, forneça contexto quando relevante, e explique em detalhes as medidas concretas apresentadas em cada plano. Seja específico sobre números, prazos, e metas mencionadas nas propostas. Responda sempre em português europeu formal, de maneira clara e acessível ao eleitor médio.`
             },
             ...messages
           ],
