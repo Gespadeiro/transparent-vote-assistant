@@ -83,6 +83,7 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
         .single();
         
       if (error) {
+        console.error("Error inserting electoral plan:", error);
         throw error;
       }
       
