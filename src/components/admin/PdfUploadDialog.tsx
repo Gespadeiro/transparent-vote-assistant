@@ -58,6 +58,7 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
           const base64Content = arrayBufferToBase64(fileContent);
           
           console.log("Sending PDF content to process-electoral-pdf function");
+          console.log("PDF content length:", base64Content.length);
           
           // Call the Supabase Edge Function to process the PDF
           const { data, error } = await supabase.functions.invoke('process-electoral-pdf', {
@@ -67,6 +68,8 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
               candidateName: candidateName || "Candidato"
             },
           });
+          
+          console.log("Response received from edge function:", data);
           
           if (error) {
             console.error("Erro ao processar PDF:", error);

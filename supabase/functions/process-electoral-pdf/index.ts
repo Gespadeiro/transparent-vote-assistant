@@ -46,14 +46,17 @@ serve(async (req) => {
     const requestData = await req.json();
     const { pdfContent, partyName, candidateName } = requestData;
 
+    // Log request data to help debug issues
+    console.log("Request received with method:", req.method);
+    console.log("Processing electoral PDF for:", candidateName, partyName);
+    console.log("PDF content received, length:", pdfContent ? pdfContent.length : "undefined");
+
     if (!pdfContent) {
       throw new Error("PDF content is required");
     }
 
-    console.log(`Processing electoral PDF for ${candidateName} (${partyName})`);
-    console.log(`PDF content length: ${pdfContent.length} characters`);
-
     // Prepare a request to the OpenAI API
+    console.log("Sending request to OpenAI API");
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
