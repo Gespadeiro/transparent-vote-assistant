@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { FileUp, Upload, X, FileText } from "lucide-react";
+import { FileUp, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PdfUploadDialogProps {
@@ -34,8 +35,10 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
   const [uploading, setUploading] = useState(false);
   const [extractingContent, setExtractingContent] = useState(false);
   const [extractedProposals, setExtractedProposals] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     const file = e.target.files?.[0];
     if (file) {
       // Check if the file is a PDF
@@ -45,53 +48,69 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
       }
       
       setSelectedFile(file);
+    }
+  };
+
+  const extractContentFromPdf = async () => {
+    if (!selectedFile) {
+      setError("Nenhum ficheiro selecionado");
+      return false;
+    }
+
+    if (!candidateName || !party) {
+      setError("Nome do candidato e partido são obrigatórios");
+      return false;
+    }
+    
+    setExtractingContent(true);
+    setError(null);
+    
+    try {
+      // Read the PDF file as an ArrayBuffer
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const base64String = btoa(
+        new Uint8Array(arrayBuffer)
+          .reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
       
-      // Extract content from PDF
-      if (file) {
-        setExtractingContent(true);
-        
-        try {
-          // Read the PDF file as an ArrayBuffer
-          const arrayBuffer = await file.arrayBuffer();
-          const base64String = btoa(
-            new Uint8Array(arrayBuffer)
-              .reduce((data, byte) => data + String.fromCharCode(byte), '')
-          );
-          
-          console.log("PDF loaded and converted to base64, first 100 chars:", base64String.substring(0, 100), "...");
-          
-          // Process the PDF with OpenAI
-          const { data, error } = await supabase.functions.invoke("process-electoral-pdf", {
-            body: { 
-              pdfBase64: base64String,
-              candidateName: candidateName || "Candidato",
-              party: party || "Partido"
-            }
-          });
-          
-          console.log("Response from process-electoral-pdf:", { data, error });
-          
-          if (error) {
-            console.error("Erro ao processar PDF:", error);
-            throw new Error(error.message);
-          }
-          
-          if (data && data.proposals) {
-            setExtractedProposals(data.proposals);
-            toast.success("Conteúdo extraído com sucesso do PDF");
-          } else {
-            console.error("Resposta inválida do processamento do PDF:", data);
-            throw new Error("Resposta inválida do processamento do PDF");
-          }
-        } catch (error) {
-          console.error("Erro ao extrair conteúdo do PDF:", error);
-          toast.error("Falha ao extrair conteúdo do PDF: " + (error instanceof Error ? error.message : "Erro desconhecido"));
-          // Fallback to mock data for testing
-          setExtractedProposals(`# Plano Eleitoral: ${party || "Partido"} - ${candidateName || "Candidato"}\n\n## Nota: Extração com IA falhou. Este é um texto de exemplo.`);
-        } finally {
-          setExtractingContent(false);
+      console.log("PDF loaded and converted to base64, length:", base64String.length);
+      
+      // Process the PDF with OpenAI
+      const { data, error: functionError } = await supabase.functions.invoke("process-electoral-pdf", {
+        body: { 
+          pdfBase64: base64String,
+          candidateName,
+          party
         }
+      });
+      
+      console.log("Response from process-electoral-pdf:", { data, error: functionError });
+      
+      if (functionError) {
+        console.error("Erro ao processar PDF:", functionError);
+        setError(`Erro ao processar PDF: ${functionError.message}`);
+        return false;
       }
+      
+      if (data && data.proposals) {
+        setExtractedProposals(data.proposals);
+        toast.success("Conteúdo extraído com sucesso do PDF");
+        return true;
+      } else if (data && data.error) {
+        setError(`Erro do servidor: ${data.error}`);
+        console.error("Erro do servidor:", data.error);
+        return false;
+      } else {
+        console.error("Resposta inválida do processamento do PDF:", data);
+        setError("Resposta inválida do processamento do PDF");
+        return false;
+      }
+    } catch (error) {
+      console.error("Erro ao extrair conteúdo do PDF:", error);
+      setError(`Falha ao extrair conteúdo do PDF: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
+      return false;
+    } finally {
+      setExtractingContent(false);
     }
   };
 
@@ -109,14 +128,24 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
     }
 
     setUploading(true);
+    setError(null);
     
     try {
+      // If proposals haven't been extracted yet, do it now
+      if (!extractedProposals) {
+        const extracted = await extractContentFromPdf();
+        if (!extracted) {
+          setUploading(false);
+          return;
+        }
+      }
+      
       // Note: Using snake_case property names to match Supabase column names
       const planData = {
         candidate_name: candidateName,
         party: party,
         summary: `Plano eleitoral para ${candidateName} (${party})`,
-        proposals: extractedProposals, // Use the extracted proposals
+        proposals: extractedProposals,
         original_pdf: selectedFile.name
       };
       
@@ -131,6 +160,7 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
         
       if (error) {
         console.error("Erro ao inserir plano eleitoral:", error);
+        setError(`Erro ao inserir plano eleitoral: ${error.message}`);
         throw error;
       }
       
@@ -153,6 +183,16 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
     setCandidateName("");
     setParty("");
     setExtractedProposals("");
+    setError(null);
+  };
+
+  const handleProcessPdf = async () => {
+    if (!selectedFile || !candidateName || !party) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+    
+    await extractContentFromPdf();
   };
 
   return (
@@ -234,11 +274,33 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
             )}
           </div>
           
+          {/* Add a button to process PDF without saving */}
+          {selectedFile && !extractedProposals && !extractingContent && (
+            <div className="flex justify-center">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleProcessPdf}
+                disabled={!selectedFile || !candidateName || !party}
+              >
+                Processar PDF
+              </Button>
+            </div>
+          )}
+          
           {extractingContent && (
             <div className="text-center py-3">
               <div className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent mr-2"></div>
               <span className="text-sm">A extrair propostas do PDF...</span>
             </div>
+          )}
+          
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {extractedProposals && (
@@ -262,7 +324,10 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!selectedFile || uploading || extractingContent}>
+            <Button 
+              type="submit" 
+              disabled={!selectedFile || uploading || extractingContent || !extractedProposals}
+            >
               {uploading ? (
                 <>
                   <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>

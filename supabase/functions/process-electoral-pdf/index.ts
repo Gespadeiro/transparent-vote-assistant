@@ -10,28 +10,40 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Log the start of the function execution
+  console.log("process-electoral-pdf function started");
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Verify API key is set
     if (!OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is not set in environment variables");
       throw new Error('OPENAI_API_KEY is not set in environment variables');
     }
 
     // Parse request
-    const { pdfBase64, candidateName, party } = await req.json();
+    console.log("Parsing request body");
+    const requestBody = await req.json();
+    console.log("Request body parsed successfully");
+
+    const { pdfBase64, candidateName, party } = requestBody;
 
     // Validate input
     if (!pdfBase64) {
+      console.error("PDF content is missing in the request");
       throw new Error('PDF content is required');
     }
 
     console.log(`Processing electoral PDF for ${candidateName} (${party})`);
+    console.log(`PDF content length: ${pdfBase64.length} characters`);
 
     // Call OpenAI API to analyze the PDF content
+    console.log("Calling OpenAI API");
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -60,14 +72,16 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
+    console.log("Received successful response from OpenAI API");
     const data = await response.json();
     const content = data.choices[0]?.message?.content;
 
     if (!content) {
+      console.error("No content in OpenAI response", data);
       throw new Error('No content in OpenAI response');
     }
 
-    console.log('PDF processed successfully');
+    console.log('PDF processed successfully, content length:', content.length);
 
     return new Response(JSON.stringify({ proposals: content }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
