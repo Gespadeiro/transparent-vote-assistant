@@ -111,7 +111,7 @@ const Candidates = () => {
           y: 0
         }} transition={{
           duration: 0.5
-        }} className="text-center mb-16 max-w-3xl mx-auto">
+        }} className="text-center mb-10 max-w-3xl mx-auto">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
               Compare Candidatos
             </h1>
