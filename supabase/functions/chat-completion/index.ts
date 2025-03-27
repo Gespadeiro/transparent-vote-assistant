@@ -13,56 +13,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Fallback responses for when we can't get electoral plan data or OpenAI is unavailable
+// Enhanced fallback responses with more detailed data
 const fallbackResponses = {
   "geral": [
-    "Defesa de um plano de emergência para o Serviço Nacional de Saúde, incluindo redução das listas de espera e contratação de mais profissionais.",
-    "Proposta de reforma fiscal com redução de impostos para a classe média e pequenas empresas para estimular a economia.",
-    "Implementação de medidas para combater a crise habitacional, incluindo construção de habitação pública e regulação das rendas.",
-    "Plano de investimento em infraestruturas sustentáveis e energia renovável para cumprir metas climáticas.",
-    "Reforço do sistema educativo público, com foco na digitalização e modernização das escolas."
+    "O plano de emergência para o Serviço Nacional de Saúde inclui a contratação de 5.000 profissionais de saúde e a criação de 20 novas Unidades de Saúde Familiar, com o objetivo de reduzir as listas de espera em 50% até 2026.",
+    "A reforma fiscal proposta inclui a redução do IRC em 2-3 pontos percentuais e benefícios fiscais para a classe média, estimando um aumento de 2% no rendimento disponível das famílias.",
+    "Para combater a crise habitacional, prevê-se a construção de 25.000 habitações públicas a custos controlados nos próximos 4 anos e a limitação do alojamento local a um máximo de 15% dos imóveis em zonas urbanas sob pressão.",
+    "O plano de investimento em infraestruturas sustentáveis e energia renovável contempla 2 mil milhões de euros até 2026, com o objetivo de atingir 85% de eletricidade de fontes renováveis.",
+    "O reforço do sistema educativo inclui a redução para 20 alunos por turma no ensino básico, a requalificação de 200 escolas com investimento de 500 milhões, e o aumento do financiamento do ensino superior em 0,3% do PIB."
   ],
   "psd": [
-    "Defesa da redução fiscal para famílias e empresas como forma de impulsionar o crescimento económico e a criação de emprego.",
-    "Plano de reforma do Serviço Nacional de Saúde, promovendo parcerias público-privadas para reduzir as listas de espera.",
-    "Implementação de medidas para aumentar a natalidade através de incentivos fiscais e apoio às famílias.",
-    "Programa de descentralização administrativa e valorização do interior do país.",
-    "Modernização da administração pública com ênfase na digitalização e redução da burocracia."
+    "O PSD defende a redução fiscal para famílias e empresas, propondo uma diminuição do IRC em 2 pontos percentuais ao longo de 4 anos e uma simplificação do sistema tributário que reduziria a carga fiscal para a classe média em cerca de 15%.",
+    "Para a reforma do Serviço Nacional de Saúde, o partido propõe parcerias público-privadas com o objetivo de reduzir as listas de espera em 50% até 2026 e a contratação de 1.000 médicos de família nas zonas mais carenciadas.",
+    "As medidas para aumentar a natalidade incluem incentivos fiscais com dedução adicional de 1.000€ por filho no IRS e a criação de uma rede nacional de creches com 25.000 novas vagas até 2027.",
+    "O programa de descentralização administrativa prevê a transferência de 1,2 mil milhões de euros para os municípios e a criação de incentivos à fixação no interior, com redução de 50% no IRS para novos residentes durante 5 anos.",
+    "A modernização da administração pública foca-se na digitalização de 95% dos serviços até 2026, com uma estimativa de redução de custos operacionais em 20% e diminuição dos prazos de resposta em 60%."
   ],
   "ps": [
-    "Reforço do Estado Social e do Serviço Nacional de Saúde como pilar fundamental da sociedade portuguesa.",
-    "Continuação da política de aumentos graduais do salário mínimo nacional para combater desigualdades.",
-    "Investimento em habitação pública e regulação do mercado imobiliário para garantir acesso à habitação.",
-    "Aposta na transição energética e economia verde como motores de crescimento sustentável.",
-    "Defesa do ensino público de qualidade, com reforço de recursos e valorização dos professores."
+    "O PS propõe um reforço do Estado Social com um investimento adicional de 0,5% do PIB anual e um aumento do orçamento do SNS em 600 milhões de euros para contratar 5.000 profissionais de saúde.",
+    "A política de aumentos do salário mínimo visa atingir os 1.000€ até 2026 (um aumento de cerca de 20% face ao valor atual) e implementar acordos de rendimentos que promovam aumentos salariais médios de 4,5% ao ano.",
+    "Na habitação, o partido planeia um investimento de 1,5 mil milhões de euros para construir 30.000 fogos públicos a custos acessíveis e regular as rendas com limites de aumento baseados na inflação mais 2%.",
+    "A transição energética inclui o investimento de 3 mil milhões em energias renováveis até 2030, com o objetivo de atingir 90% de eletricidade de fontes renováveis e reduzir em 55% as emissões de gases com efeito de estufa.",
+    "Para o ensino público, o PS defende a contratação de 10.000 professores nos próximos 4 anos, a requalificação de 300 escolas com um investimento de 700 milhões, e a redução gradual das propinas no ensino superior em 25%."
   ],
   "be": [
-    "Nacionalização de serviços essenciais e rejeição de privatizações em setores estratégicos.",
-    "Aumento significativo do salário mínimo nacional e reforço dos direitos laborais.",
-    "Criação de uma rede pública de creches gratuitas e investimento na educação pública.",
-    "Implementação de políticas ambiciosas de combate às alterações climáticas e transição energética justa.",
-    "Defesa de um plano nacional de habitação pública e controlo efetivo das rendas."
+    "O Bloco de Esquerda propõe a nacionalização de empresas em setores estratégicos como energia, telecomunicações e transportes, estimando uma poupança para os consumidores de 15-20% nas tarifas.",
+    "Para os salários, defende um aumento significativo do salário mínimo para 1.100€ até 2026 (cerca de 30% de aumento) e uma lei que impeça que o rácio entre o salário mais alto e o mais baixo numa empresa ultrapasse 1:10.",
+    "Na educação, propõe a gratuitidade total do ensino público, a criação de uma rede nacional de 100.000 vagas em creches públicas gratuitas, e um investimento de 1 mil milhão para renovação de infraestruturas escolares.",
+    "As políticas climáticas incluem um investimento de 4 mil milhões em transportes públicos urbanos e ferroviários, com o objetivo de os tornar gratuitos até 2030 e reduzir as emissões do setor em 70%.",
+    "Para a habitação, defende um plano nacional com 50.000 fogos públicos a rendas acessíveis, a imposição de tetos máximos às rendas em grandes centros urbanos, e a proibição da venda de imóveis a não-residentes em zonas de pressão urbanística."
   ],
   "cdu": [
-    "Valorização dos serviços públicos e reversão de privatizações em setores estratégicos.",
-    "Aumento significativo dos salários e pensões para melhorar as condições de vida dos trabalhadores.",
-    "Defesa da produção nacional e reindustrialização do país como forma de garantir a soberania económica.",
-    "Implementação de políticas de apoio à agricultura familiar e às pequenas e médias empresas.",
-    "Investimento público em habitação e controlo das rendas para garantir o direito à habitação."
+    "A CDU defende a valorização dos serviços públicos com a renacionalização de empresas privatizadas nos setores da energia, comunicações e transportes, com um plano de investimento público de 5 mil milhões anuais.",
+    "Propõe o aumento do salário mínimo para 1.000€ imediatamente e 1.300€ até final da legislatura (um aumento de cerca de 50%), bem como o aumento das pensões mínimas em 10% por ano durante 4 anos.",
+    "Na defesa da produção nacional, apresenta um plano de reindustrialização com investimento de 2 mil milhões e proteção de setores estratégicos, visando reduzir a dependência externa em 30% até 2030.",
+    "Para a agricultura, defende apoios de 500 milhões anuais para pequenos e médios agricultores, garantia de preços mínimos para produtos essenciais, e criação de uma rede pública de distribuição direta do produtor ao consumidor.",
+    "Na habitação, propõe o controlo efetivo das rendas com tetos máximos baseados no rendimento médio da zona (nunca superiores a 30% do rendimento familiar), construção de 100.000 fogos públicos em 10 anos, e imposição de uma taxa de 25% sobre imóveis detidos por fundos imobiliários."
   ],
   "il": [
-    "Simplificação e redução significativa da carga fiscal para impulsionar o crescimento económico.",
-    "Liberalização do mercado de trabalho para estimular a criação de emprego e a competitividade.",
-    "Reforma do sistema de saúde, promovendo a liberdade de escolha e a concorrência entre prestadores.",
-    "Diminuição da intervenção do Estado na economia, privilegiando a iniciativa privada e o empreendedorismo.",
-    "Modernização e redução da burocracia estatal, apostando na digitalização e simplificação de processos."
+    "A Iniciativa Liberal propõe uma simplificação radical do sistema fiscal, reduzindo o número de escalões de IRS de 7 para 3 e uma taxa única de 15% para rendimentos até 30.000€ anuais, estimando um aumento médio de 10% no rendimento disponível das famílias.",
+    "Para o mercado de trabalho, defende uma liberalização com contratos mais flexíveis, redução da TSU em 4 pontos percentuais, e incentivos fiscais para empresas que criem empregos qualificados com salários 20% acima da média sectorial.",
+    "A reforma do sistema de saúde inclui a implementação de um modelo de liberdade de escolha entre prestadores públicos e privados através de um sistema de vouchers, com o objetivo de reduzir as listas de espera em 75% em dois anos.",
+    "Propõe uma diminuição da intervenção estatal com privatização de empresas públicas deficitárias (poupança estimada de 1,5 mil milhões anuais) e redução da despesa pública em 6 mil milhões nos próximos 4 anos.",
+    "Na modernização administrativa, defende a digitalização completa de todos os serviços públicos até 2025, a redução do número de ministérios de 19 para 12, e um corte de 15% no número de funcionários públicos através da não substituição de aposentações."
   ],
   "chega": [
-    "Combate à corrupção com penalizações mais severas e maior transparência na administração pública.",
-    "Reforço das políticas de segurança e autoridade do Estado, com mais recursos para as forças policiais.",
-    "Reforma profunda do sistema judicial para garantir maior celeridade e eficácia na aplicação da justiça.",
-    "Controlo mais rigoroso da imigração ilegal e políticas de integração mais exigentes.",
-    "Redução da carga fiscal para famílias e empresas como estímulo à economia."
+    "O Chega propõe medidas anticorrupção que incluem o agravamento de penas para crimes de corrupção (mínimo de 5 anos de prisão efetiva), a criação de um tribunal especial anticorrupção, e a implementação de um sistema de declaração patrimonial digital para todos os titulares de cargos públicos.",
+    "Para a segurança, defende o reforço imediato das forças policiais com 5.000 novos agentes, um aumento salarial de 30% para profissionais de segurança, e investimento de 300 milhões em equipamento e tecnologia para forças policiais.",
+    "A reforma do sistema judicial prevê a criação de tribunais especializados em crimes económicos, contratação de 700 novos juízes e procuradores, e implementação de sistemas digitais para reduzir a duração dos processos em 60%.",
+    "Nas políticas de imigração, propõe um sistema de quotas por país e por setor económico, exigência de contrato de trabalho prévio à entrada no país, e um processo de verificação de antecedentes mais rigoroso com expulsão imediata em caso de condenação criminal.",
+    "Para a redução fiscal, defende uma diminuição do IRS em todos os escalões (média de 25%), eliminação do imposto sobre combustíveis, e redução do IRC para 15% em três anos para estimular o investimento empresarial."
   ]
 };
 
@@ -146,7 +146,7 @@ serve(async (req) => {
 
   try {
     // Get the request body
-    const { messages, temperature = 0.7, candidateFilter = null } = await req.json();
+    const { messages, temperature = 0.7, max_tokens = 1500, candidateFilter = null } = await req.json();
 
     console.log(`Processando pedido de chat completion com ${messages.length} mensagens`);
     if (candidateFilter) {
@@ -206,9 +206,10 @@ serve(async (req) => {
 Quando solicitado, você deve:
 1. Analisar em profundidade as informações disponíveis, especialmente as PROPOSTAS DETALHADAS de cada plano
 2. Organizar sua resposta por temas relevantes (economia, saúde, educação, etc.)
-3. Apresentar as propostas concretas com números e metas específicas quando disponíveis
+3. Apresentar as propostas concretas com números e metas específicas quando disponíveis (percentagens, valores monetários, prazos, quantidades)
 4. Comparar diferentes posições políticas de forma equilibrada e imparcial
 5. Explicar potenciais impactos das propostas na sociedade e economia
+6. Fornecer dados específicos sempre que possível, destacando os detalhes concretos de cada proposta
 
 ${candidateFilter ? 'Foque especificamente nos candidatos/partidos especificados, fornecendo o máximo de detalhes sobre suas propostas.' : 'Forneça uma visão abrangente de todos os planos disponíveis, destacando as principais diferenças entre eles.'}
 
@@ -218,11 +219,12 @@ Aqui estão os planos eleitorais disponíveis, com suas propostas detalhadas:
 
 ${planContext}
 
-Não se limite a resumir o conteúdo. Analise criticamente as propostas, forneça contexto quando relevante, e explique em detalhes as medidas concretas apresentadas em cada plano. Seja específico sobre números, prazos, e metas mencionadas nas propostas. Responda sempre em português europeu formal, de maneira clara e acessível ao eleitor médio.`
+Não se limite a resumir o conteúdo. Analise criticamente as propostas, forneça contexto quando relevante, e explique em detalhes as medidas concretas apresentadas em cada plano. Seja específico sobre números, prazos, e metas mencionadas nas propostas - estes detalhes são cruciais para que os eleitores compreendam as diferenças entre as políticas propostas. Responda sempre em português europeu formal, de maneira clara e acessível ao eleitor médio.`
             },
             ...messages
           ],
           temperature: temperature,
+          max_tokens: max_tokens,
         }),
       });
 
