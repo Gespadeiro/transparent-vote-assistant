@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import { 
@@ -9,57 +9,40 @@ import {
   BarChart3,
   Award,
   User,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-// Quiz questions
-const QUIZ_QUESTIONS = [
-  {
-    id: 1,
-    question: "How should healthcare be managed?",
-    options: [
-      { id: "a", text: "Universal public healthcare system for all citizens", alignment: "progressive" },
-      { id: "b", text: "Mix of public and private healthcare options", alignment: "moderate" },
-      { id: "c", text: "Primarily market-based healthcare with minimal government involvement", alignment: "conservative" }
-    ]
-  },
-  {
-    id: 2,
-    question: "What approach to taxation do you prefer?",
-    options: [
-      { id: "a", text: "Progressive taxation with higher rates for wealthy individuals", alignment: "progressive" },
-      { id: "b", text: "Moderate tax rates with targeted incentives", alignment: "moderate" },
-      { id: "c", text: "Lower tax rates across the board to stimulate economic growth", alignment: "conservative" }
-    ]
-  },
-  {
-    id: 3,
-    question: "How should environmental issues be addressed?",
-    options: [
-      { id: "a", text: "Aggressive regulations and investment in renewable energy", alignment: "progressive" },
-      { id: "b", text: "Balanced approach with moderate regulations and market incentives", alignment: "moderate" },
-      { id: "c", text: "Market-driven solutions with minimal government intervention", alignment: "conservative" }
-    ]
-  },
-  {
-    id: 4,
-    question: "What is your position on education funding?",
-    options: [
-      { id: "a", text: "Significantly increase public education funding and make college free", alignment: "progressive" },
-      { id: "b", text: "Moderate increases in education funding with some subsidies for higher education", alignment: "moderate" },
-      { id: "c", text: "Focus on private education options and school choice", alignment: "conservative" }
-    ]
-  },
-  {
-    id: 5,
-    question: "What immigration policies do you support?",
-    options: [
-      { id: "a", text: "Welcoming immigration policies with paths to citizenship", alignment: "progressive" },
-      { id: "b", text: "Balanced approach to legal immigration with moderate enforcement", alignment: "moderate" },
-      { id: "c", text: "Strict immigration enforcement and border security", alignment: "conservative" }
-    ]
-  }
-];
+interface QuizOption {
+  id: string;
+  option_id: string;
+  text: string;
+  alignment: string;
+  question_id: string;
+}
+
+interface QuizQuestion {
+  id: number | string;
+  question: string;
+  options: QuizOption[];
+}
+
+interface UserAnswer {
+  questionId: number | string;
+  selectedOption: string;
+  alignment: string;
+}
+
+interface Candidate {
+  id: number;
+  name: string;
+  party: string;
+  image: string;
+  alignment: string;
+  matchPercentage?: number;
+}
 
 // Mock candidates
 const CANDIDATES = [
@@ -86,19 +69,62 @@ const CANDIDATES = [
   }
 ];
 
-interface UserAnswer {
-  questionId: number;
-  selectedOption: string;
-  alignment: string;
-}
-
 const Quiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [matchedCandidates, setMatchedCandidates] = useState<any[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const handleOptionSelect = (questionId: number, optionId: string, alignment: string) => {
+  useEffect(() => {
+    const fetchQuizQuestions = async () => {
+      setIsLoading(true);
+      try {
+        // First, get all quiz questions
+        const { data: questions, error: questionsError } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (questionsError) throw questionsError;
+        
+        if (!questions || questions.length === 0) {
+          setQuizQuestions([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Then, for each question, get its options
+        const questionsWithOptions = await Promise.all(
+          questions.map(async (question) => {
+            const { data: options, error: optionsError } = await supabase
+              .from('quiz_options')
+              .select('*')
+              .eq('question_id', question.id);
+              
+            if (optionsError) throw optionsError;
+            
+            return {
+              ...question,
+              options: options || []
+            };
+          })
+        );
+        
+        setQuizQuestions(questionsWithOptions);
+      } catch (error) {
+        console.error("Error fetching quiz questions:", error);
+        toast.error("Failed to load quiz questions");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQuizQuestions();
+  }, []);
+  
+  const handleOptionSelect = (questionId: number | string, optionId: string, alignment: string) => {
     const existingAnswerIndex = userAnswers.findIndex(
       answer => answer.questionId === questionId
     );
@@ -122,7 +148,7 @@ const Quiz = () => {
     
     // Auto advance to next question after a short delay
     setTimeout(() => {
-      if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
+      if (currentQuestion < quizQuestions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
       }
     }, 500);
@@ -135,7 +161,7 @@ const Quiz = () => {
   };
   
   const handleNextQuestion = () => {
-    if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
+    if (currentQuestion < quizQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     }
   };
@@ -148,7 +174,7 @@ const Quiz = () => {
     }, {} as Record<string, number>);
     
     // Get total score
-    const totalQuestions = QUIZ_QUESTIONS.length;
+    const totalQuestions = quizQuestions.length;
     
     // Calculate candidate matches based on alignment scores
     const candidateMatches = CANDIDATES.map(candidate => {
@@ -172,16 +198,59 @@ const Quiz = () => {
     setMatchedCandidates([]);
   };
   
-  const isQuestionAnswered = (questionId: number) => {
+  const isQuestionAnswered = (questionId: number | string) => {
     return userAnswers.some(answer => answer.questionId === questionId);
   };
   
-  const getSelectedOption = (questionId: number) => {
+  const getSelectedOption = (questionId: number | string) => {
     const answer = userAnswers.find(answer => answer.questionId === questionId);
     return answer ? answer.selectedOption : null;
   };
   
-  const progress = (currentQuestion + 1) / QUIZ_QUESTIONS.length * 100;
+  const progress = quizQuestions.length ? (currentQuestion + 1) / quizQuestions.length * 100 : 0;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pb-20">
+        <Navbar />
+        <section className="pt-32 pb-16 px-6">
+          <div className="container mx-auto max-w-4xl">
+            <div className="flex justify-center items-center h-64">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-election-blue" />
+                <p className="text-lg text-gray-600">Loading quiz questions...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (quizQuestions.length === 0) {
+    return (
+      <div className="min-h-screen pb-20">
+        <Navbar />
+        <section className="pt-32 pb-16 px-6">
+          <div className="container mx-auto max-w-4xl">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                Find Your Political Match
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
+                Answer a few questions about your political preferences to discover 
+                which candidates align most closely with your values.
+              </p>
+              <div className="neo-card p-8">
+                <p className="text-xl mb-4">No quiz questions are available at the moment.</p>
+                <p className="text-gray-600">Please check back later or contact the administrator.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-20">
@@ -227,23 +296,23 @@ const Quiz = () => {
                   className="p-8"
                 >
                   <div className="text-sm text-gray-500 mb-6">
-                    Question {currentQuestion + 1} of {QUIZ_QUESTIONS.length}
+                    Question {currentQuestion + 1} of {quizQuestions.length}
                   </div>
                   
                   <h2 className="text-2xl font-semibold mb-8">
-                    {QUIZ_QUESTIONS[currentQuestion].question}
+                    {quizQuestions[currentQuestion]?.question}
                   </h2>
                   
                   <div className="space-y-4 mb-10">
-                    {QUIZ_QUESTIONS[currentQuestion].options.map((option) => {
-                      const isSelected = getSelectedOption(QUIZ_QUESTIONS[currentQuestion].id) === option.id;
+                    {quizQuestions[currentQuestion]?.options.map((option) => {
+                      const isSelected = getSelectedOption(quizQuestions[currentQuestion].id) === option.option_id;
                       
                       return (
                         <motion.button
                           key={option.id}
                           onClick={() => handleOptionSelect(
-                            QUIZ_QUESTIONS[currentQuestion].id, 
-                            option.id, 
+                            quizQuestions[currentQuestion].id, 
+                            option.option_id, 
                             option.alignment
                           )}
                           whileHover={{ scale: 1.01 }}
@@ -281,12 +350,12 @@ const Quiz = () => {
                       Previous
                     </button>
                     
-                    {currentQuestion < QUIZ_QUESTIONS.length - 1 ? (
+                    {currentQuestion < quizQuestions.length - 1 ? (
                       <button
                         onClick={handleNextQuestion}
-                        disabled={!isQuestionAnswered(QUIZ_QUESTIONS[currentQuestion].id)}
+                        disabled={!isQuestionAnswered(quizQuestions[currentQuestion].id)}
                         className={`flex items-center ${
-                          !isQuestionAnswered(QUIZ_QUESTIONS[currentQuestion].id) 
+                          !isQuestionAnswered(quizQuestions[currentQuestion].id) 
                             ? "text-gray-300 cursor-not-allowed" 
                             : "text-gray-600 hover:text-election-blue"
                         } transition-colors duration-300`}
@@ -297,9 +366,9 @@ const Quiz = () => {
                     ) : (
                       <button
                         onClick={handleSubmitQuiz}
-                        disabled={userAnswers.length !== QUIZ_QUESTIONS.length}
+                        disabled={userAnswers.length !== quizQuestions.length}
                         className={`px-6 py-2 rounded-lg ${
-                          userAnswers.length !== QUIZ_QUESTIONS.length 
+                          userAnswers.length !== quizQuestions.length 
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
                             : "bg-election-blue text-white hover:bg-blue-600"
                         } transition-all duration-300`}
@@ -333,7 +402,7 @@ const Quiz = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.1 }}
-                        className="flex items-center p-5 rounded-xl border border-gray-200 bg-white"
+                        className="flex items-center p-5 rounded-xl border border-gray-200 bg-white relative"
                       >
                         {index === 0 && (
                           <div className="absolute -top-3 -right-3 bg-election-blue text-white text-xs font-medium px-3 py-1 rounded-full">
