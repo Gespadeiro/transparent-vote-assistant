@@ -33,7 +33,7 @@ export const getChatCompletion = async (
     const messages: ChatMessage[] = [
       {
         role: "system",
-        content: "You are an electoral plans assistant that provides accurate information based on the electoral plans in the database. Stick to information from the plans and avoid speculating."
+        content: "Você é um assistente de planos eleitorais que fornece informações detalhadas com base em todas as propostas e dados disponíveis nos planos. Analise as informações completas, incluindo propostas detalhadas, e forneça respostas abrangentes em português europeu."
       },
       ...previousMessages,
       { role: "user", content: prompt }
@@ -50,42 +50,42 @@ export const getChatCompletion = async (
         messages,
         model: "gpt-4o-mini",
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 800, // Aumentei o limite para permitir respostas mais detalhadas
       },
     });
 
     if (error) {
-      console.error("Error calling chat-completion function:", error);
-      throw new Error(error.message || "Failed to call OpenAI service");
+      console.error("Erro ao chamar a função chat-completion:", error);
+      throw new Error(error.message || "Falha ao chamar o serviço OpenAI");
     }
 
     return data.choices[0].message.content;
   } catch (error) {
-    console.error("Error getting chat completion:", error);
-    toast.error("Failed to get information from electoral plans. Please try again.");
+    console.error("Erro ao obter chat completion:", error);
+    toast.error("Não foi possível obter informações dos planos eleitorais. Por favor, tente novamente.");
     
     // Return a fallback response when the API call fails
-    return "I'm sorry, I couldn't access the electoral plans information at the moment. Please try asking a different question or try again later.";
+    return "Lamento, de momento não consegui aceder às informações detalhadas dos planos eleitorais. Por favor, coloque uma questão diferente ou tente novamente mais tarde.";
   }
 };
 
 // Updated mock responses focused on electoral plans
 const BOT_RESPONSES: Record<string, string> = {
-  "what are the main policy differences between psd and ps?": 
-    "Based on the electoral plans in our database, PSD tends to focus more on economic policies like tax reduction for families and businesses, healthcare reform through public-private partnerships, and administrative decentralization. PS typically emphasizes strengthening the social state, gradual minimum wage increases, public housing investment, and renewable energy.",
+  "quais são as principais diferenças políticas entre psd e ps?": 
+    "Com base nos planos eleitorais na nossa base de dados, o PSD tende a focar-se mais em políticas económicas como a redução fiscal para famílias e empresas, reforma da saúde através de parcerias público-privadas, e descentralização administrativa. O PS geralmente enfatiza o fortalecimento do Estado Social, aumentos graduais do salário mínimo nacional, investimento em habitação pública, e energia renovável.",
   
-  "what are the economic proposals in the electoral plans?": 
-    "The economic proposals in the electoral plans vary by party. Generally, they include tax reform measures, strategies for economic growth, approaches to public investment, and policies for job creation. Some plans emphasize public investment while others focus on private sector incentives.",
+  "quais são as propostas económicas nos planos eleitorais?": 
+    "As propostas económicas nos planos eleitorais variam por partido. Geralmente, incluem medidas de reforma fiscal, estratégias para o crescimento económico, abordagens ao investimento público, e políticas para criação de emprego. Alguns planos enfatizam o investimento público enquanto outros focam-se em incentivos para o setor privado.",
   
-  "what healthcare reforms are candidates proposing?": 
-    "Healthcare reform proposals in the electoral plans typically address waiting list reduction, healthcare professional hiring, and service quality improvement. Some plans propose public-private partnerships, while others emphasize strengthening the public system exclusively.",
+  "que reformas de saúde os candidatos estão a propor?": 
+    "As propostas de reforma da saúde nos planos eleitorais geralmente abordam a redução das listas de espera, contratação de profissionais de saúde, e melhoria da qualidade do serviço. Alguns planos propõem parcerias público-privadas, enquanto outros enfatizam exclusivamente o fortalecimento do sistema público.",
   
-  "what environmental policies are in the electoral plans?": 
-    "The environmental policies in electoral plans include sustainable infrastructure investment, renewable energy development, climate goal achievement measures, and approaches to environmental protection. The specifics vary by candidate and party.",
+  "quais são as políticas ambientais nos planos eleitorais?": 
+    "As políticas ambientais nos planos eleitorais incluem investimento em infraestruturas sustentáveis, desenvolvimento de energia renovável, medidas para atingir metas climáticas, e abordagens para a proteção ambiental. Os detalhes específicos variam por candidato e partido.",
   
-  "how do the candidates plan to address housing issues?": 
-    "Housing proposals in the electoral plans include public housing construction, rent regulation mechanisms, incentives for affordable housing development, and measures to address housing shortages. Approaches differ based on party ideology.",
+  "como os candidatos planeiam abordar questões de habitação?": 
+    "As propostas de habitação nos planos eleitorais incluem construção de habitação pública, mecanismos de regulação das rendas, incentivos para o desenvolvimento de habitação acessível, e medidas para enfrentar a escassez de habitação. As abordagens diferem com base na ideologia partidária.",
   
-  "what educational reforms are being proposed?": 
-    "Educational reform proposals typically include public education system strengthening, school digitalization and modernization, teacher value enhancement, and educational quality improvement strategies, with variation between progressive and conservative approaches."
+  "que reformas educacionais estão a ser propostas?": 
+    "As propostas de reforma educacional geralmente incluem fortalecimento do sistema de educação pública, digitalização e modernização das escolas, valorização dos professores e estratégias de melhoria da qualidade educativa, com variação entre abordagens progressistas e conservadoras."
 };

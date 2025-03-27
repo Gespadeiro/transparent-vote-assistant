@@ -73,31 +73,31 @@ async function fetchElectoralPlans() {
       .select('candidate_name, party, summary, topics, proposals');
     
     if (error) {
-      console.error("Error fetching electoral plans:", error);
+      console.error("Erro ao obter planos eleitorais:", error);
       return null;
     }
     
     return data;
   } catch (error) {
-    console.error("Exception fetching electoral plans:", error);
+    console.error("Exceção ao obter planos eleitorais:", error);
     return null;
   }
 }
 
 function formatElectoralPlansForContext(plans) {
   if (!plans || plans.length === 0) {
-    return "No electoral plans available.";
+    return "Não há planos eleitorais disponíveis.";
   }
   
   return plans.map(plan => {
     const topics = Array.isArray(plan.topics) ? plan.topics.join(", ") : plan.topics;
     
     return `
-CANDIDATE: ${plan.candidate_name}
-PARTY: ${plan.party}
-SUMMARY: ${plan.summary || "No summary available"}
-TOPICS: ${topics || "No topics available"}
-PROPOSALS: ${plan.proposals || "No detailed proposals available"}
+CANDIDATO: ${plan.candidate_name}
+PARTIDO: ${plan.party}
+RESUMO: ${plan.summary || "Sem resumo disponível"}
+TÓPICOS: ${topics || "Sem tópicos disponíveis"}
+PROPOSTAS DETALHADAS: ${plan.proposals || "Sem propostas detalhadas disponíveis"}
 ---
 `;
   }).join("\n");
@@ -128,7 +128,13 @@ async function generateFallbackFromElectoralPlans(query, party = null) {
   
   // Generate a cohesive response from the available data
   const response = relevantPlans.map(plan => {
-    return `Candidato ${plan.candidate_name} (${plan.party}): ${plan.summary || "Sem resumo disponível."}`;
+    let detailedResponse = `Candidato ${plan.candidate_name} (${plan.party}): ${plan.summary || "Sem resumo disponível."}\n\n`;
+    
+    if (plan.proposals) {
+      detailedResponse += `Propostas detalhadas: ${plan.proposals}\n\n`;
+    }
+    
+    return detailedResponse;
   }).join("\n\n");
   
   return [response];
@@ -188,7 +194,13 @@ serve(async (req) => {
             // Add a custom system message with electoral plan context
             {
               role: "system",
-              content: `Você é um assistente especializado em política portuguesa que responde apenas com base nas informações fornecidas sobre planos eleitorais. Aqui estão os planos eleitorais disponíveis:\n\n${planContext}\n\nSe não houver informações suficientes para responder a uma pergunta, indique que não possui dados sobre esse tópico. Sempre dê respostas em português europeu.`
+              content: `Você é um assistente especializado em política portuguesa que responde com base em informações detalhadas sobre planos eleitorais. Analise cuidadosamente todas as informações disponíveis, incluindo propostas detalhadas, resumos e tópicos. 
+
+Aqui estão os planos eleitorais disponíveis, incluindo suas propostas detalhadas:
+
+${planContext}
+
+Utilize TODAS as informações disponíveis (especialmente as PROPOSTAS DETALHADAS) para responder às perguntas de forma completa e abrangente. Quando perguntado sobre um candidato ou partido específico, forneça uma análise aprofundada das suas propostas. Não limite a resposta apenas ao resumo geral. Se não houver informações suficientes, indique claramente o que está em falta. Responda sempre em português europeu formal.`
             },
             ...messages
           ],

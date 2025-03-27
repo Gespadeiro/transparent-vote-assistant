@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -13,8 +14,16 @@ interface Message {
   timestamp: Date;
 }
 
-// Better suggested questions focused on electoral plans
-const SUGGESTED_QUESTIONS = ["What are the main policy differences between PSD and PS?", "What are the economic proposals in the electoral plans?", "What healthcare reforms are candidates proposing?", "What environmental policies are in the electoral plans?", "How do the candidates plan to address housing issues?", "What educational reforms are being proposed?"];
+// Perguntas sugeridas focadas em planos eleitorais em português
+const SUGGESTED_QUESTIONS = [
+  "Quais são as principais diferenças políticas entre PSD e PS?", 
+  "Quais são as propostas económicas dos candidatos?", 
+  "Que reformas na saúde estão a ser propostas?", 
+  "Quais são as políticas ambientais nos planos eleitorais?", 
+  "Como os candidatos planeiam resolver a crise de habitação?", 
+  "Que reformas educacionais estão a ser propostas?"
+];
+
 const Chatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -26,7 +35,7 @@ const Chatbot = () => {
     setMessages([{
       id: "welcome",
       type: "bot",
-      text: "👋 Hello! I'm your electoral plans assistant. I can provide information about candidate proposals and policies based on their electoral plans. How can I help you today?",
+      text: "👋 Olá! Sou o assistente de planos eleitorais. Posso fornecer informações detalhadas sobre as propostas e políticas dos candidatos com base nos seus planos eleitorais. Como posso ajudá-lo hoje?",
       timestamp: new Date()
     }]);
   }, []);
@@ -37,6 +46,7 @@ const Chatbot = () => {
       behavior: "smooth"
     });
   }, [messages]);
+  
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -74,7 +84,7 @@ const Chatbot = () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        text: "Sorry, I couldn't process your request. Please try again with a question about the electoral plans.",
+        text: "Desculpe, não consegui processar o seu pedido. Por favor, tente novamente com uma pergunta sobre os planos eleitorais.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -82,6 +92,7 @@ const Chatbot = () => {
       setIsLoading(false);
     }
   };
+  
   const handleSuggestedQuestion = async (question: string) => {
     // Add user message
     const userMessage: Message = {
@@ -115,7 +126,7 @@ const Chatbot = () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        text: "Sorry, I couldn't process your request. Please try again later.",
+        text: "Desculpe, não consegui processar o seu pedido. Por favor, tente novamente mais tarde.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -123,6 +134,7 @@ const Chatbot = () => {
       setIsLoading(false);
     }
   };
+  
   return <div className="min-h-screen pb-20 bg-gray-50 dark:bg-gray-900">
       <Navbar />
       
@@ -138,17 +150,43 @@ const Chatbot = () => {
           duration: 0.5
         }} className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Electoral Plans Assistant
+              Assistente de Planos Eleitorais
             </h1>
             <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Ask questions about electoral plans, candidate proposals, and policy positions to get information based on the official plans in our database.
+              Faça perguntas sobre planos eleitorais, propostas dos candidatos e posições políticas para obter informações detalhadas baseadas nos planos oficiais na nossa base de dados.
             </p>
           </motion.div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Left sidebar - Suggested questions */}
             <div className="lg:col-span-1">
+              <div className="glass-morphism p-4 rounded-xl mb-4">
+                <h3 className="font-medium mb-3 flex items-center">
+                  <MessageSquare size={16} className="mr-2 text-election-blue" />
+                  Perguntas Sugeridas
+                </h3>
+                <div className="space-y-2">
+                  {SUGGESTED_QUESTIONS.map((question, index) => (
+                    <button 
+                      key={index}
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="text-sm text-left w-full p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              </div>
               
+              <div className="bg-blue-50 p-4 rounded-xl">
+                <h3 className="font-medium mb-2 text-election-blue flex items-center">
+                  <Info size={16} className="mr-2" />
+                  Dica
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Pode perguntar sobre candidatos ou partidos específicos, temas como economia, saúde, educação, ou comparar diferentes planos eleitorais.
+                </p>
+              </div>
             </div>
             
             {/* Right - Chat interface */}
@@ -160,7 +198,7 @@ const Chatbot = () => {
                     <Bot size={16} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="font-medium">Electoral Plans Assistant</h3>
+                    <h3 className="font-medium">Assistente de Planos Eleitorais</h3>
                     <div className="text-xs text-green-500 flex items-center">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                       Online
@@ -189,7 +227,7 @@ const Chatbot = () => {
                           </div>
                           
                           <div className={`p-3 rounded-lg ${message.type === "user" ? "bg-election-blue text-white rounded-tr-none" : "glass-morphism rounded-tl-none"}`}>
-                            <p className="text-sm">{message.text}</p>
+                            <p className="text-sm whitespace-pre-line">{message.text}</p>
                             <div className={`text-xs mt-1 ${message.type === "user" ? "text-blue-100" : "text-gray-400"}`}>
                               {message.timestamp.toLocaleTimeString([], {
                             hour: '2-digit',
@@ -200,11 +238,11 @@ const Chatbot = () => {
                             {message.type === "bot" && message.id !== "welcome" && <div className="flex items-center space-x-2 mt-2">
                                 <button className="text-xs text-gray-400 hover:text-election-blue transition-colors duration-200 flex items-center">
                                   <ThumbsUp size={12} className="mr-1" />
-                                  Helpful
+                                  Útil
                                 </button>
                                 <button className="text-xs text-gray-400 hover:text-election-blue transition-colors duration-200 flex items-center">
                                   <ThumbsDown size={12} className="mr-1" />
-                                  Not helpful
+                                  Não útil
                                 </button>
                               </div>}
                           </div>
@@ -228,7 +266,7 @@ const Chatbot = () => {
                           <div className="glass-morphism p-3 rounded-lg rounded-tl-none">
                             <div className="flex items-center space-x-2">
                               <Loader2 size={16} className="animate-spin text-election-blue" />
-                              <p className="text-sm text-gray-500">Thinking...</p>
+                              <p className="text-sm text-gray-500">A analisar planos eleitorais...</p>
                             </div>
                           </div>
                         </div>
@@ -241,7 +279,7 @@ const Chatbot = () => {
                 {/* Input container */}
                 <div className="p-4 border-t border-gray-100">
                   <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                    <input type="text" value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Ask about electoral plans and policy proposals..." className="flex-1 p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-election-blue/20 focus:border-election-blue transition-all duration-300" disabled={isLoading} />
+                    <input type="text" value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Pergunte sobre planos eleitorais e propostas políticas..." className="flex-1 p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-election-blue/20 focus:border-election-blue transition-all duration-300" disabled={isLoading} />
                     <button type="submit" disabled={!inputValue.trim() || isLoading} className={`p-3 rounded-lg ${!inputValue.trim() || isLoading ? "bg-gray-100 text-gray-400" : "bg-election-blue text-white hover:bg-blue-600"} transition-all duration-300`}>
                       <Send size={18} />
                     </button>
