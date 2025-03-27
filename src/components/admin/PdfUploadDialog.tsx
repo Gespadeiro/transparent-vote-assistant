@@ -65,9 +65,10 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
       // 1. Save the electoral plan data to Supabase
       // 2. Process the PDF content using AI (in a future implementation)
       
+      // Note: Using snake_case property names to match Supabase column names
       const planData = {
-        candidateName,
-        party,
+        candidate_name: candidateName,
+        party: party,
         summary: `Electoral plan for ${candidateName} (${party})`,
         topics: ["Economy", "Healthcare", "Environment"],
         proposals: "Detailed proposals would be extracted from the PDF document.",
