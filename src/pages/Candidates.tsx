@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { BarChart3, User, FileText, TrendingUp, MessageCircle, Search, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
 interface Sentiment {
   positive: number;
   neutral: number;
   negative: number;
 }
+
 interface Candidate {
   id: string;
   candidate_name: string;
@@ -18,11 +21,13 @@ interface Candidate {
   topics: string[];
   sentiment?: Sentiment;
 }
+
 interface SentimentBarProps {
   value: number;
   color: string;
   label: string;
 }
+
 const SentimentBar: React.FC<SentimentBarProps> = ({
   value,
   color,
@@ -38,13 +43,18 @@ const SentimentBar: React.FC<SentimentBarProps> = ({
       <div className="w-10 text-right text-xs text-gray-600">{value}%</div>
     </div>;
 };
+
 const Candidates = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("Todos");
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Collect all unique topics from candidates
+  const navigateToProfile = (candidateId: string) => {
+    navigate(`/candidate/${candidateId}`);
+  };
+
   const allTopics = ["Todos"];
   candidates.forEach(candidate => {
     if (candidate.topics && Array.isArray(candidate.topics)) {
@@ -55,6 +65,7 @@ const Candidates = () => {
       });
     }
   });
+
   useEffect(() => {
     async function fetchCandidates() {
       setIsLoading(true);
@@ -67,20 +78,18 @@ const Candidates = () => {
         });
         if (error) throw error;
 
-        // Transform the data to match our Candidate interface
         const formattedCandidates = data.map(plan => ({
           id: plan.id,
           candidate_name: plan.candidate_name,
           party: plan.party,
           image_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
-          // Default image
           summary: plan.summary,
           topics: Array.isArray(plan.topics) ? plan.topics : typeof plan.topics === 'string' ? JSON.parse(plan.topics) : [],
           sentiment: {
             positive: 65,
             neutral: 25,
             negative: 10
-          } // Default sentiment
+          }
         }));
         setCandidates(formattedCandidates);
       } catch (error) {
@@ -92,15 +101,16 @@ const Candidates = () => {
     }
     fetchCandidates();
   }, []);
+
   const filteredCandidates = candidates.filter(candidate => {
     const matchesSearch = candidate.candidate_name.toLowerCase().includes(searchTerm.toLowerCase()) || candidate.party.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTopic = selectedTopic === "Todos" || candidate.topics && Array.isArray(candidate.topics) && candidate.topics.includes(selectedTopic);
     return matchesSearch && matchesTopic;
   });
+
   return <div className="min-h-screen pb-20">
       <Navbar />
       
-      {/* Hero Section */}
       <section className="pt-32 pb-2 px-[12px]">
         <div className="container mx-auto">
           <motion.div initial={{
@@ -121,21 +131,17 @@ const Candidates = () => {
             </p>
           </motion.div>
           
-          {/* Search and Filter */}
           <div className="glass-morphism rounded-xl p-4 mb-10 max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <input type="text" placeholder="Pesquisar candidatos ou partidos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-election-blue/20 focus:border-election-blue transition-all duration-300" />
               </div>
-              
-              
             </div>
           </div>
         </div>
       </section>
       
-      {/* Candidates Grid */}
       <section className="px-6">
         <div className="container mx-auto">
           {isLoading ? <div className="flex justify-center items-center py-20">
@@ -189,7 +195,9 @@ const Candidates = () => {
                     </div>}
                   
                   <div className="flex justify-end mt-4">
-                    <button className="text-sm text-election-blue hover:underline flex items-center">
+                    <button 
+                      onClick={() => navigateToProfile(candidate.id)}
+                      className="text-sm text-election-blue hover:underline flex items-center">
                       Ver perfil detalhado
                       <TrendingUp size={14} className="ml-1" />
                     </button>
@@ -207,4 +215,5 @@ const Candidates = () => {
       </section>
     </div>;
 };
+
 export default Candidates;
