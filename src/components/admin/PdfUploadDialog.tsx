@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -51,47 +50,39 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
         setExtractingContent(true);
         
         try {
-          // Generate a mock response since the edge function is removed
-          setTimeout(() => {
-            const mockResponse = `# Plano Eleitoral: ${party || "Partido"} - ${candidateName || "Candidato"}
-
-## Sumário Geral
-Este documento apresenta as principais propostas e visão do ${party || "Partido"} para as eleições legislativas de 2025, destacando áreas prioritárias como economia, saúde, educação e ambiente.
-
-## Principais Áreas de Foco
-1. **Economia e Finanças**
-   - Redução gradual da carga fiscal para famílias e empresas
-   - Incentivos ao investimento em setores estratégicos
-   - Programa de apoio às PMEs com linha de crédito especial
-
-2. **Saúde**
-   - Reforço do Serviço Nacional de Saúde
-   - Redução das listas de espera através de parcerias público-privadas
-   - Implementação de programa nacional de saúde mental
-
-3. **Educação**
-   - Modernização das infraestruturas escolares
-   - Valorização da carreira docente
-   - Expansão do ensino profissional e técnico
-
-4. **Ambiente e Transição Energética**
-   - Investimento em energias renováveis
-   - Proteção da costa marítima e recursos hídricos
-   - Promoção da mobilidade sustentável
-
-## Perguntas Frequentes
-1. Quais são as principais medidas económicas propostas?
-2. Como o partido pretende resolver a crise na saúde?
-3. Qual a estratégia para a transição energética?`;
-            
-            setExtractedProposals(mockResponse);
-            toast.success("Conteúdo extraído com sucesso do PDF");
-            setExtractingContent(false);
-          }, 1500);
+          // Read the PDF file as an ArrayBuffer
+          const arrayBuffer = await file.arrayBuffer();
+          const base64String = btoa(
+            new Uint8Array(arrayBuffer)
+              .reduce((data, byte) => data + String.fromCharCode(byte), '')
+          );
           
+          // Process the PDF with OpenAI
+          const { data, error } = await supabase.functions.invoke("process-electoral-pdf", {
+            body: { 
+              pdfBase64: base64String,
+              candidateName: candidateName || "Candidato",
+              party: party || "Partido"
+            }
+          });
+          
+          if (error) {
+            console.error("Erro ao processar PDF:", error);
+            throw new Error(error.message);
+          }
+          
+          if (data && data.proposals) {
+            setExtractedProposals(data.proposals);
+            toast.success("Conteúdo extraído com sucesso do PDF");
+          } else {
+            throw new Error("Resposta inválida do processamento do PDF");
+          }
         } catch (error) {
           console.error("Erro ao extrair conteúdo do PDF:", error);
-          toast.error("Falha ao extrair conteúdo do PDF");
+          toast.error("Falha ao extrair conteúdo do PDF: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+          // Fallback to mock data for testing
+          setExtractedProposals(`# Plano Eleitoral: ${party || "Partido"} - ${candidateName || "Candidato"}\n\n## Nota: Extração com IA falhou. Este é um texto de exemplo.`);
+        } finally {
           setExtractingContent(false);
         }
       }
