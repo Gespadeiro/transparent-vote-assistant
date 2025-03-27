@@ -42,6 +42,8 @@ export const getChatCompletion = async (
       { role: "user", content: prompt }
     ];
     
+    console.log("Sending request to OpenAI with messages:", messages);
+    
     // Call OpenAI API through Supabase Edge Function
     const { data, error } = await supabase.functions.invoke("openai-chat", {
       body: { messages, model: "gpt-4o", temperature: 0.7 }
@@ -53,9 +55,11 @@ export const getChatCompletion = async (
     }
     
     if (!data || !data.content) {
+      console.error("Resposta inválida da API:", data);
       throw new Error("Resposta inválida da API");
     }
     
+    console.log("Received response from OpenAI:", data.content);
     return data.content;
   } catch (error) {
     console.error("Erro ao obter chat completion:", error);

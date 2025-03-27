@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -57,6 +58,8 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
               .reduce((data, byte) => data + String.fromCharCode(byte), '')
           );
           
+          console.log("PDF loaded and converted to base64, first 100 chars:", base64String.substring(0, 100), "...");
+          
           // Process the PDF with OpenAI
           const { data, error } = await supabase.functions.invoke("process-electoral-pdf", {
             body: { 
@@ -65,6 +68,8 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
               party: party || "Partido"
             }
           });
+          
+          console.log("Response from process-electoral-pdf:", { data, error });
           
           if (error) {
             console.error("Erro ao processar PDF:", error);
@@ -75,6 +80,7 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
             setExtractedProposals(data.proposals);
             toast.success("Conteúdo extraído com sucesso do PDF");
           } else {
+            console.error("Resposta inválida do processamento do PDF:", data);
             throw new Error("Resposta inválida do processamento do PDF");
           }
         } catch (error) {
@@ -114,6 +120,8 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
         original_pdf: selectedFile.name
       };
       
+      console.log("Saving electoral plan to database:", planData);
+      
       // Insert the electoral plan into the database
       const { data, error } = await supabase
         .from('electoral_plans')
@@ -125,6 +133,8 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
         console.error("Erro ao inserir plano eleitoral:", error);
         throw error;
       }
+      
+      console.log("Electoral plan saved successfully:", data);
       
       onPdfProcessed(data);
       toast.success("Plano eleitoral adicionado com sucesso");

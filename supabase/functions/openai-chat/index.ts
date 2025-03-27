@@ -29,7 +29,7 @@ serve(async (req) => {
       throw new Error('Invalid messages format');
     }
 
-    console.log(`Calling OpenAI with ${messages.length} messages`);
+    console.log(`Calling OpenAI API with ${messages.length} messages`);
 
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
