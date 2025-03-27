@@ -9,7 +9,230 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      candidate_policies: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          proposal: string | null
+          stance: string
+          topic: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          proposal?: string | null
+          stance: string
+          topic: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          proposal?: string | null
+          stance?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_policies_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidates: {
+        Row: {
+          bio: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          party: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          party: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          party?: string
+        }
+        Relationships: []
+      }
+      electoral_plans: {
+        Row: {
+          candidate_name: string
+          created_at: string
+          id: string
+          original_pdf: string | null
+          party: string
+          proposals: string | null
+          summary: string | null
+          topics: Json | null
+          updated_at: string
+        }
+        Insert: {
+          candidate_name: string
+          created_at?: string
+          id?: string
+          original_pdf?: string | null
+          party: string
+          proposals?: string | null
+          summary?: string | null
+          topics?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          candidate_name?: string
+          created_at?: string
+          id?: string
+          original_pdf?: string | null
+          party?: string
+          proposals?: string | null
+          summary?: string | null
+          topics?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quiz_options: {
+        Row: {
+          alignment: string
+          created_at: string
+          id: string
+          option_id: string
+          question_id: string
+          text: string
+        }
+        Insert: {
+          alignment: string
+          created_at?: string
+          id?: string
+          option_id: string
+          question_id: string
+          text: string
+        }
+        Update: {
+          alignment?: string
+          created_at?: string
+          id?: string
+          option_id?: string
+          question_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          created_at: string
+          id: string
+          question: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question?: string
+        }
+        Relationships: []
+      }
+      user_answers: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          question_id: string
+          user_quiz_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          question_id: string
+          user_quiz_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          question_id?: string
+          user_quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_answers_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_answers_user_quiz_id_fkey"
+            columns: ["user_quiz_id"]
+            isOneToOne: false
+            referencedRelation: "user_quiz_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_quiz_results: {
+        Row: {
+          completed_at: string
+          id: string
+          result_conservative: number
+          result_moderate: number
+          result_progressive: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          result_conservative: number
+          result_moderate: number
+          result_progressive: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          result_conservative?: number
+          result_moderate?: number
+          result_progressive?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

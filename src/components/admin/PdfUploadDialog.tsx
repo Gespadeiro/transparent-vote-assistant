@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PdfUploadDialogProps {
   open: boolean;
@@ -61,30 +62,36 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
     
     try {
       // In a real implementation, here we would:
-      // 1. Upload the PDF to a server
-      // 2. Process the PDF content using AI
-      // 3. Extract key information and generate a summary
+      // 1. Save the electoral plan data to Supabase
+      // 2. Process the PDF content using AI (in a future implementation)
       
-      // Simulating a server request with a timeout
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock data that would come from AI processing
-      const mockProcessedData = {
+      const planData = {
         candidateName,
         party,
-        summary: `AI-generated summary of ${selectedFile.name}`,
+        summary: `Electoral plan for ${candidateName} (${party})`,
         topics: ["Economy", "Healthcare", "Environment"],
-        proposals: "Detailed proposals extracted from the PDF document.",
-        originalPdf: selectedFile.name
+        proposals: "Detailed proposals would be extracted from the PDF document.",
+        original_pdf: selectedFile.name
       };
       
-      onPdfProcessed(mockProcessedData);
-      toast.success("PDF processed successfully");
+      // Insert the electoral plan into the database
+      const { data, error } = await supabase
+        .from('electoral_plans')
+        .insert(planData)
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      onPdfProcessed(data);
+      toast.success("Electoral plan added successfully");
       resetForm();
       onOpenChange(false);
     } catch (error) {
-      toast.error("Error processing PDF. Please try again.");
-      console.error(error);
+      console.error("Error processing PDF:", error);
+      toast.error("Error saving electoral plan. Please try again.");
     } finally {
       setUploading(false);
     }
