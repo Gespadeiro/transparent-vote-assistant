@@ -9,7 +9,6 @@ import {
   BarChart3, 
   MessageCircle, 
   Building2, 
-  CircleCheck, 
   Loader2,
   Share 
 } from "lucide-react";
@@ -51,7 +50,6 @@ interface Candidate {
   party: string;
   image_url?: string;
   summary: string | null;
-  topics: string[];
   proposals: string | null;
   sentiment?: Sentiment;
 }
@@ -86,7 +84,6 @@ const CandidateProfile = () => {
           party: data.party,
           image_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80", // Default image
           summary: data.summary,
-          topics: Array.isArray(data.topics) ? data.topics : typeof data.topics === 'string' ? JSON.parse(data.topics) : [],
           proposals: data.proposals,
           sentiment: {
             positive: 65,
@@ -221,14 +218,6 @@ const CandidateProfile = () => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {candidate.topics && candidate.topics.map(topic => (
-                      <span key={topic} className="text-xs bg-blue-50 text-election-blue px-3 py-1 rounded-full">
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-                  
                   <p className="text-gray-600">{candidate.summary}</p>
                 </div>
               </div>
@@ -237,10 +226,9 @@ const CandidateProfile = () => {
           
           {/* Tabs for different sections */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 md:w-[400px] mb-6">
+            <TabsList className="grid grid-cols-2 md:w-[400px] mb-6">
               <TabsTrigger value="overview">Visão Geral</TabsTrigger>
               <TabsTrigger value="proposals">Propostas</TabsTrigger>
-              <TabsTrigger value="analysis">Análise</TabsTrigger>
             </TabsList>
             
             <TabsContent value="overview" className="space-y-6">
@@ -261,25 +249,27 @@ const CandidateProfile = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <MessageCircle size={20} className="mr-2 text-election-blue" />
-                    Temas Principais
+                    <BarChart3 size={20} className="mr-2 text-election-blue" />
+                    Análise de Sentimento
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {candidate.topics && candidate.topics.length > 0 ? (
-                      candidate.topics.map((topic, index) => (
-                        <div 
-                          key={index} 
-                          className="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <CircleCheck size={18} className="mr-2 text-green-500" />
-                          <span>{topic}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 col-span-full">Nenhum tema principal definido para este candidato.</p>
-                    )}
+                  <p className="text-sm text-gray-500 mb-4">
+                    Esta análise representa a percepção pública das propostas do candidato baseada em processamento de linguagem natural.
+                  </p>
+                  
+                  <div className="space-y-2 mb-6">
+                    <SentimentBar value={candidate.sentiment?.positive || 0} color="bg-green-400" label="Positivo" />
+                    <SentimentBar value={candidate.sentiment?.neutral || 0} color="bg-gray-400" label="Neutro" />
+                    <SentimentBar value={candidate.sentiment?.negative || 0} color="bg-red-400" label="Negativo" />
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Interpretação:</h4>
+                    <p className="text-sm text-gray-600">
+                      As propostas deste candidato são geralmente vistas de forma positiva, com 65% de sentimento positivo.
+                      Isso sugere que a maioria do público responde bem às políticas e ideias apresentadas.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -306,36 +296,6 @@ const CandidateProfile = () => {
                   ) : (
                     <p className="text-gray-500">Nenhuma proposta detalhada disponível para este candidato.</p>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="analysis" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <BarChart3 size={20} className="mr-2 text-election-blue" />
-                    Análise de Sentimento
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Esta análise representa a percepção pública das propostas do candidato baseada em processamento de linguagem natural.
-                  </p>
-                  
-                  <div className="space-y-2 mb-6">
-                    <SentimentBar value={candidate.sentiment?.positive || 0} color="bg-green-400" label="Positivo" />
-                    <SentimentBar value={candidate.sentiment?.neutral || 0} color="bg-gray-400" label="Neutro" />
-                    <SentimentBar value={candidate.sentiment?.negative || 0} color="bg-red-400" label="Negativo" />
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Interpretação:</h4>
-                    <p className="text-sm text-gray-600">
-                      As propostas deste candidato são geralmente vistas de forma positiva, com 65% de sentimento positivo.
-                      Isso sugere que a maioria do público responde bem às políticas e ideias apresentadas.
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

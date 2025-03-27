@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +19,6 @@ interface Candidate {
   party: string;
   image_url?: string;
   summary: string | null;
-  topics: string[];
   sentiment?: Sentiment;
 }
 
@@ -47,24 +47,12 @@ const SentimentBar: React.FC<SentimentBarProps> = ({
 const Candidates = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTopic, setSelectedTopic] = useState("Todos");
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   const navigateToProfile = (candidateId: string) => {
     navigate(`/candidate/${candidateId}`);
   };
-
-  const allTopics = ["Todos"];
-  candidates.forEach(candidate => {
-    if (candidate.topics && Array.isArray(candidate.topics)) {
-      candidate.topics.forEach(topic => {
-        if (!allTopics.includes(topic)) {
-          allTopics.push(topic);
-        }
-      });
-    }
-  });
 
   useEffect(() => {
     async function fetchCandidates() {
@@ -84,7 +72,6 @@ const Candidates = () => {
           party: plan.party,
           image_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
           summary: plan.summary,
-          topics: Array.isArray(plan.topics) ? plan.topics : typeof plan.topics === 'string' ? JSON.parse(plan.topics) : [],
           sentiment: {
             positive: 65,
             neutral: 25,
@@ -104,8 +91,7 @@ const Candidates = () => {
 
   const filteredCandidates = candidates.filter(candidate => {
     const matchesSearch = candidate.candidate_name.toLowerCase().includes(searchTerm.toLowerCase()) || candidate.party.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTopic = selectedTopic === "Todos" || candidate.topics && Array.isArray(candidate.topics) && candidate.topics.includes(selectedTopic);
-    return matchesSearch && matchesTopic;
+    return matchesSearch;
   });
 
   return <div className="min-h-screen pb-20">
@@ -163,14 +149,6 @@ const Candidates = () => {
                     <div>
                       <h3 className="text-xl font-semibold">{candidate.candidate_name}</h3>
                       <p className="text-sm text-gray-500">{candidate.party}</p>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {candidate.topics && Array.isArray(candidate.topics) && candidate.topics.slice(0, 2).map(topic => <span key={topic} className="text-xs bg-blue-50 text-election-blue px-2 py-1 rounded-full">
-                            {topic}
-                          </span>)}
-                        {candidate.topics && Array.isArray(candidate.topics) && candidate.topics.length > 2 && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                            +{candidate.topics.length - 2}
-                          </span>}
-                      </div>
                     </div>
                   </div>
                   
