@@ -20,38 +20,38 @@ const Index = () => {
 
   const features = [
     {
-      title: "Candidate Comparison",
-      description: "Easily compare candidates side by side based on their proposals and political positions.",
+      title: "Comparação de Candidatos",
+      description: "Compare facilmente candidatos lado a lado com base nas suas propostas e posições políticas.",
       icon: <HeartHandshake size={24} />,
       path: "/candidates"
     },
     {
-      title: "Proposal Summarization",
-      description: "AI-powered summaries of candidates' electoral programs for quick understanding.",
+      title: "Resumo de Propostas",
+      description: "Resumos alimentados por IA dos programas eleitorais dos candidatos para uma compreensão rápida.",
       icon: <FileText size={24} />,
       path: "/candidates"
     },
     {
-      title: "Sentiment Analysis",
-      description: "Track communication patterns and message tone from speeches and social media.",
+      title: "Análise de Sentimento",
+      description: "Acompanhe padrões de comunicação e tom de mensagem de discursos e redes sociais.",
       icon: <BarChart3 size={24} />,
       path: "/candidates"
     },
     {
-      title: "Q&A Chatbot",
-      description: "Ask questions about candidates, elections, and proposals for immediate answers.",
+      title: "Assistente Virtual",
+      description: "Faça perguntas sobre candidatos, eleições e propostas para respostas imediatas.",
       icon: <Bot size={24} />,
       path: "/chatbot"
     },
     {
-      title: "Personalized Quiz",
-      description: "Discover which candidates align with your values through an interactive quiz.",
+      title: "Questionário Personalizado",
+      description: "Descubra quais candidatos se alinham com os seus valores através de um questionário interativo.",
       icon: <CheckSquare size={24} />,
       path: "/quiz"
     },
     {
-      title: "Data Visualization",
-      description: "Clear and intuitive visualizations of electoral data and candidate positions.",
+      title: "Visualização de Dados",
+      description: "Visualizações claras e intuitivas de dados eleitorais e posições dos candidatos.",
       icon: <TrendingUp size={24} />,
       path: "/candidates"
     }
@@ -73,10 +73,10 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Key Features</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Funcionalidades Principais</h2>
             <p className="text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
-              Tools designed to help you navigate the complexities of elections 
-              and make decisions aligned with your values.
+              Ferramentas projetadas para ajudar a navegar pelas complexidades das eleições 
+              e tomar decisões alinhadas com os seus valores.
             </p>
           </motion.div>
           
@@ -105,9 +105,9 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Como Funciona</h2>
             <p className="text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
-              Our platform uses artificial intelligence to provide objective, data-driven insights.
+              Nossa plataforma utiliza inteligência artificial para fornecer insights objetivos baseados em dados.
             </p>
           </motion.div>
           
@@ -115,18 +115,18 @@ const Index = () => {
             {[
               {
                 step: "01",
-                title: "Explore candidates",
-                description: "Browse candidate profiles, their proposals, and political history."
+                title: "Explore candidatos",
+                description: "Navegue pelos perfis dos candidatos, suas propostas e histórico político."
               },
               {
                 step: "02",
-                title: "Analyze data",
-                description: "Review sentiment analysis, voting records, and proposal summaries."
+                title: "Analise dados",
+                description: "Reveja análise de sentimento, histórico de votação e resumos de propostas."
               },
               {
                 step: "03",
-                title: "Find your match",
-                description: "Take our quiz to discover which candidates align with your values."
+                title: "Encontre seu candidato ideal",
+                description: "Faça nosso questionário para descobrir quais candidatos se alinham com seus valores."
               }
             ].map((item, index) => (
               <motion.div
@@ -160,24 +160,24 @@ const Index = () => {
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
               <div className="max-w-lg">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  Ready to make an informed decision?
+                  Pronto para tomar uma decisão informada?
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Start exploring candidates and discover who best represents your values and interests.
+                  Comece a explorar candidatos e descubra quem melhor representa seus valores e interesses.
                 </p>
                 <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                   <button 
                     onClick={() => navigate('/candidates')}
                     className="glass-morphism hover:bg-election-blue/10 px-6 py-3 rounded-full font-medium text-election-blue border border-election-blue/30 flex items-center justify-center group transition-all duration-300"
                   >
-                    Explore Candidates
+                    Explorar Candidatos
                     <ExternalLink size={16} className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
                   </button>
                   <button 
                     onClick={() => navigate('/quiz')}
                     className="bg-election-blue hover:bg-blue-600 text-white px-6 py-3 rounded-full font-medium flex items-center justify-center transition-all duration-300"
                   >
-                    Take the Quiz
+                    Fazer Questionário
                   </button>
                 </div>
               </div>
@@ -196,7 +196,7 @@ const Index = () => {
                   <div className="relative z-10 text-center">
                     <div className="text-5xl font-bold text-election-blue mb-2">76%</div>
                     <div className="text-sm text-gray-600 dark:text-gray-300">
-                      of voters found their ideal candidate using our platform
+                      dos eleitores encontraram seu candidato ideal usando nossa plataforma
                     </div>
                   </div>
                 </div>
@@ -212,20 +212,20 @@ const Index = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
               <div className="text-lg font-semibold flex items-center space-x-2">
-                <span className="text-election-blue font-bold">Transparent</span>
-                <span>Election</span>
+                <span className="text-election-blue font-bold">Eleições</span>
+                <span>Transparentes</span>
               </div>
               <p className="text-sm text-gray-500 mt-2">
-                Making elections more transparent, one vote at a time.
+                Tornando as eleições mais transparentes, um voto de cada vez.
               </p>
             </div>
             
             <div className="flex flex-col space-y-2 text-center md:text-right">
               <div className="text-sm text-gray-500">
-                © {new Date().getFullYear()} Transparent Election. All rights reserved.
+                © {new Date().getFullYear()} Eleições Transparentes. Todos os direitos reservados.
               </div>
               <div className="text-xs text-gray-400">
-                A platform for informed electoral decisions
+                Uma plataforma para decisões eleitorais informadas
               </div>
             </div>
           </div>

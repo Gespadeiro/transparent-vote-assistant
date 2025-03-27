@@ -42,11 +42,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
-  candidateName: z.string().min(1, "Candidate name is required"),
-  party: z.string().min(1, "Party name is required"),
-  summary: z.string().min(1, "Summary is required"),
-  topics: z.string().min(1, "At least one topic is required"),
-  proposals: z.string().min(10, "Detailed proposals are required"),
+  candidateName: z.string().min(1, "Nome do candidato é obrigatório"),
+  party: z.string().min(1, "Nome do partido é obrigatório"),
+  summary: z.string().min(1, "Resumo é obrigatório"),
+  topics: z.string().min(1, "Pelo menos um tópico é obrigatório"),
+  proposals: z.string().min(10, "Propostas detalhadas são obrigatórias"),
 });
 
 interface ElectoralPlanFormProps {
@@ -94,7 +94,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
   };
 
   const getDefaultPrompt = (candidateName: string, partyName: string) => {
-    return `Provide a summary of key proposals and policy positions for ${candidateName} of the ${partyName} party. Format the response as 4-5 clear, separate bullet points that could be added to an electoral plan database. Each bullet point should focus on a different policy area.`;
+    return `Forneça um resumo das principais propostas e posições políticas para ${candidateName} do partido ${partyName}. Formate a resposta como 4-5 tópicos claros e separados que possam ser adicionados a uma base de dados de planos eleitorais portugueses. Cada tópico deve focar em uma área política diferente. Concentre-se em informações relevantes para o contexto político português.`;
   };
 
   const handleOpenPromptDialog = () => {
@@ -102,7 +102,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
     const partyName = form.getValues("party");
     
     if (!candidateName) {
-      toast.error("Please enter a candidate name first");
+      toast.error("Por favor, insira o nome do candidato primeiro");
       return;
     }
 
@@ -115,11 +115,11 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
     const partyName = form.getValues("party");
     
     if (!candidateName) {
-      toast.error("Please enter a candidate name first");
+      toast.error("Por favor, insira o nome do candidato primeiro");
       return;
     }
 
-    setSearchQuery(`${candidateName} ${partyName} electoral plan proposals`);
+    setSearchQuery(`${candidateName} ${partyName} propostas eleitorais`);
     setIsSearching(true);
     setSearchResults([]);
     setSearchDialogOpen(true);
@@ -131,7 +131,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
           messages: [
             {
               role: "system",
-              content: "You are a helpful assistant that researches political candidates and their electoral plans. Provide factual, concise information about their key proposals and policy positions."
+              content: "Você é um assistente útil que pesquisa sobre candidatos políticos portugueses e seus planos eleitorais. Forneça informações factuais e concisas sobre suas principais propostas e posições políticas no contexto português."
             },
             {
               role: "user",
@@ -155,9 +155,9 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
       
       setSearchResults(bulletPoints);
     } catch (error) {
-      console.error("Error searching for candidate information:", error);
-      toast.error("Failed to search for candidate information");
-      setSearchResults(["Error retrieving information. Please try again."]);
+      console.error("Erro ao pesquisar informações do candidato:", error);
+      toast.error("Falha ao pesquisar informações do candidato");
+      setSearchResults(["Erro ao recuperar informações. Por favor, tente novamente."]);
     } finally {
       setIsSearching(false);
     }
@@ -165,7 +165,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
 
   const handleAddToProposals = () => {
     if (!selectedResult) {
-      toast.error("Please select information to add");
+      toast.error("Por favor, selecione informações para adicionar");
       return;
     }
 
@@ -175,7 +175,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
       : selectedResult;
     
     form.setValue("proposals", updatedProposals, { shouldDirty: true });
-    toast.success("Information added to proposals");
+    toast.success("Informações adicionadas às propostas");
     setSearchDialogOpen(false);
     setSelectedResult("");
   };
@@ -190,9 +190,9 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
               name="candidateName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Candidate Name</FormLabel>
+                  <FormLabel>Nome do Candidato</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter candidate name" {...field} />
+                    <Input placeholder="Insira o nome do candidato" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -204,9 +204,9 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
               name="party"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Political Party</FormLabel>
+                  <FormLabel>Partido Político</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter political party" {...field} />
+                    <Input placeholder="Insira o partido político" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -219,16 +219,16 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
             name="summary"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Summary</FormLabel>
+                <FormLabel>Resumo</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="A brief summary of the electoral plan" 
+                    placeholder="Um breve resumo do plano eleitoral" 
                     className="min-h-[80px]"
                     {...field} 
                   />
                 </FormControl>
                 <FormDescription>
-                  Provide a concise summary of the electoral plan (100-200 characters)
+                  Forneça um resumo conciso do plano eleitoral (100-200 caracteres)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -240,12 +240,12 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
             name="topics"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Topics</FormLabel>
+                <FormLabel>Tópicos</FormLabel>
                 <FormControl>
-                  <Input placeholder="Healthcare, Economy, Education..." {...field} />
+                  <Input placeholder="Saúde, Economia, Educação..." {...field} />
                 </FormControl>
                 <FormDescription>
-                  Enter topics separated by commas
+                  Insira tópicos separados por vírgulas
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -258,7 +258,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
             render={({ field }) => (
               <FormItem>
                 <div className="flex justify-between items-center">
-                  <FormLabel>Detailed Proposals</FormLabel>
+                  <FormLabel>Propostas Detalhadas</FormLabel>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -270,24 +270,24 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
                           className="flex items-center gap-1"
                         >
                           <Search size={14} />
-                          Find Candidate Information
+                          Pesquisar Informações do Candidato
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Search for public information about this candidate's proposals</p>
+                        <p>Pesquisar informações públicas sobre as propostas deste candidato</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
                 <FormControl>
                   <Textarea 
-                    placeholder="Detailed description of all proposals in the electoral plan" 
+                    placeholder="Descrição detalhada de todas as propostas no plano eleitoral" 
                     className="min-h-[150px]"
                     {...field} 
                   />
                 </FormControl>
                 <FormDescription>
-                  Enter the full text of the proposals or a detailed breakdown
+                  Insira o texto completo das propostas ou um detalhamento completo
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -297,11 +297,11 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
           <div className="flex justify-end gap-3 pt-3">
             <Button type="button" variant="outline" onClick={onCancel}>
               <X size={16} className="mr-2" />
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit">
               <Save size={16} className="mr-2" />
-              Save Plan
+              Salvar Plano
             </Button>
           </div>
         </form>
@@ -311,9 +311,9 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
       <Dialog open={promptDialogOpen} onOpenChange={setPromptDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Customize Search Prompt</DialogTitle>
+            <DialogTitle>Personalizar Prompt de Pesquisa</DialogTitle>
             <DialogDescription>
-              Customize the prompt sent to ChatGPT when searching for candidate information
+              Personalize o prompt enviado ao ChatGPT ao pesquisar informações do candidato
             </DialogDescription>
           </DialogHeader>
           
@@ -322,10 +322,10 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
               className="min-h-[150px]"
-              placeholder="Enter your custom prompt for ChatGPT..."
+              placeholder="Insira seu prompt personalizado para o ChatGPT..."
             />
             <p className="text-sm text-muted-foreground mt-2">
-              The prompt will automatically include the candidate name and party.
+              O prompt incluirá automaticamente o nome do candidato e partido.
             </p>
           </div>
 
@@ -334,7 +334,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
               variant="outline" 
               onClick={() => setPromptDialogOpen(false)}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button 
               onClick={() => {
@@ -344,7 +344,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
               className="gap-1"
             >
               <Search size={16} />
-              Search with Custom Prompt
+              Pesquisar com Prompt Personalizado
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -354,27 +354,27 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
       <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Candidate Information Search</DialogTitle>
+            <DialogTitle>Pesquisa de Informações do Candidato</DialogTitle>
             <DialogDescription>
-              Searching for: {searchQuery}
+              Pesquisando por: {searchQuery}
             </DialogDescription>
           </DialogHeader>
           
           {isSearching ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-              <p className="text-sm text-muted-foreground">Searching for candidate information...</p>
+              <p className="text-sm text-muted-foreground">Pesquisando informações do candidato...</p>
             </div>
           ) : (
             <div className="max-h-[400px] overflow-y-auto">
               {searchResults.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">No results found</p>
+                <p className="text-center py-8 text-muted-foreground">Nenhum resultado encontrado</p>
               ) : (
                 <Command className="rounded-lg border shadow-md">
-                  <CommandInput placeholder="Filter results..." />
+                  <CommandInput placeholder="Filtrar resultados..." />
                   <CommandList>
-                    <CommandEmpty>No results found</CommandEmpty>
-                    <CommandGroup heading="Select information to add">
+                    <CommandEmpty>Nenhum resultado encontrado</CommandEmpty>
+                    <CommandGroup heading="Selecione informações para adicionar">
                       {searchResults.map((result, index) => (
                         <CommandItem
                           key={index}
@@ -399,7 +399,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
               onClick={() => setSearchDialogOpen(false)}
               disabled={isSearching}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button 
               onClick={handleAddToProposals} 
@@ -407,7 +407,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
               className="gap-1"
             >
               <PlusCircle size={16} />
-              Add to Proposals
+              Adicionar às Propostas
             </Button>
           </DialogFooter>
         </DialogContent>
