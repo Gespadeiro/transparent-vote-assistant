@@ -29,11 +29,14 @@ export const getChatCompletion = async (
   previousMessages: ChatMessage[] = []
 ): Promise<string> => {
   try {
+    // Extract any potential candidate or party mentions from the prompt
+    const candidateMatches = extractCandidateOrPartyNames(prompt);
+    
     // Prepare the messages for the API
     const messages: ChatMessage[] = [
       {
         role: "system",
-        content: "Você é um assistente de planos eleitorais que fornece informações detalhadas com base em todas as propostas e dados disponíveis nos planos. Analise as informações completas, incluindo propostas detalhadas, e forneça respostas abrangentes em português europeu."
+        content: `Você é um assistente de planos eleitorais que fornece informações detalhadas com base em todas as propostas e dados disponíveis nos planos. ${candidateMatches.length > 0 ? `Analise especificamente as informações sobre ${candidateMatches.join(', ')}.` : 'Analise as informações completas'} Foque nas propostas detalhadas e forneça respostas específicas e relevantes em português europeu.`
       },
       ...previousMessages,
       { role: "user", content: prompt }
@@ -50,7 +53,8 @@ export const getChatCompletion = async (
         messages,
         model: "gpt-4o-mini",
         temperature: 0.7,
-        max_tokens: 800, // Aumentei o limite para permitir respostas mais detalhadas
+        max_tokens: 800,
+        candidateFilter: candidateMatches.length > 0 ? candidateMatches : null,
       },
     });
 
@@ -68,6 +72,19 @@ export const getChatCompletion = async (
     return "Lamento, de momento não consegui aceder às informações detalhadas dos planos eleitorais. Por favor, coloque uma questão diferente ou tente novamente mais tarde.";
   }
 };
+
+// Function to extract candidate or party names from the prompt
+function extractCandidateOrPartyNames(prompt: string): string[] {
+  const candidatesAndParties = [
+    // Parties
+    "psd", "ps", "be", "cdu", "il", "chega", 
+    "social democrata", "socialista", "bloco", "comunista", "pcp", "iniciativa liberal",
+    // Add common candidate names here if needed
+  ];
+  
+  const lowerPrompt = prompt.toLowerCase();
+  return candidatesAndParties.filter(name => lowerPrompt.includes(name));
+}
 
 // Updated mock responses focused on electoral plans
 const BOT_RESPONSES: Record<string, string> = {

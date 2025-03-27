@@ -66,11 +66,25 @@ const fallbackResponses = {
   ]
 };
 
-async function fetchElectoralPlans() {
+async function fetchElectoralPlans(candidateFilters = null) {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('electoral_plans')
       .select('candidate_name, party, summary, topics, proposals');
+    
+    // Apply filters if candidate or party filters exist
+    if (candidateFilters && candidateFilters.length > 0) {
+      const lowerCaseFilters = candidateFilters.map(filter => filter.toLowerCase());
+      
+      // Build OR conditions for candidate_name and party matches
+      const filterConditions = lowerCaseFilters.map(filter => {
+        return `(LOWER(candidate_name) LIKE '%${filter}%' OR LOWER(party) LIKE '%${filter}%')`;
+      }).join(' OR ');
+      
+      query = query.or(filterConditions);
+    }
+    
+    const { data, error } = await query;
     
     if (error) {
       console.error("Erro ao obter planos eleitorais:", error);
@@ -103,31 +117,29 @@ PROPOSTAS DETALHADAS: ${plan.proposals || "Sem propostas detalhadas disponíveis
   }).join("\n");
 }
 
-async function generateFallbackFromElectoralPlans(query, party = null) {
-  const plans = await fetchElectoralPlans();
+async function generateFallbackFromElectoralPlans(query, candidateFilters = null) {
+  const plans = await fetchElectoralPlans(candidateFilters);
   
   if (!plans || plans.length === 0) {
-    // If we can't get plans data, use static fallbacks
-    const partyKey = party ? party.toLowerCase() : "geral";
-    return fallbackResponses[partyKey] || fallbackResponses.geral;
-  }
-  
-  let relevantPlans = plans;
-  
-  // Filter by party if specified
-  if (party) {
-    relevantPlans = plans.filter(p => 
-      p.party.toLowerCase().includes(party.toLowerCase()) || 
-      p.candidate_name.toLowerCase().includes(party.toLowerCase())
-    );
-    
-    if (relevantPlans.length === 0) {
-      relevantPlans = plans; // Fallback to all plans if no match
+    // If we can't get plans data or no matching plans, use static fallbacks
+    if (candidateFilters && candidateFilters.length > 0) {
+      // Try to find a match in our static fallbacks
+      for (const filter of candidateFilters) {
+        const lowerFilter = filter.toLowerCase();
+        for (const [key, responses] of Object.entries(fallbackResponses)) {
+          if (key.toLowerCase().includes(lowerFilter)) {
+            return responses;
+          }
+        }
+      }
     }
+    
+    // If no specific match, return general fallback
+    return fallbackResponses.geral;
   }
   
   // Generate a cohesive response from the available data
-  const response = relevantPlans.map(plan => {
+  const response = plans.map(plan => {
     let detailedResponse = `Candidato ${plan.candidate_name} (${plan.party}): ${plan.summary || "Sem resumo disponível."}\n\n`;
     
     if (plan.proposals) {
@@ -140,6 +152,18 @@ async function generateFallbackFromElectoralPlans(query, party = null) {
   return [response];
 }
 
+function extractTopicsFromQuery(query) {
+  const topics = [
+    "economia", "saúde", "educação", "habitação", "ambiente", 
+    "imigração", "segurança", "justiça", "trabalho", "impostos", 
+    "fiscal", "reforma", "aposentadoria", "energia", "transporte",
+    "mobilidade", "corrupção", "administração", "tecnologia", "digital"
+  ];
+  
+  const lowerQuery = query.toLowerCase();
+  return topics.filter(topic => lowerQuery.includes(topic));
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -148,9 +172,12 @@ serve(async (req) => {
 
   try {
     // Get the request body
-    const { messages, temperature = 0.7 } = await req.json();
+    const { messages, temperature = 0.7, candidateFilter = null } = await req.json();
 
     console.log(`Processando pedido de chat completion com ${messages.length} mensagens`);
+    if (candidateFilter) {
+      console.log(`Filtros aplicados: ${candidateFilter.join(', ')}`);
+    }
 
     // Make sure we have an OpenAI API key
     if (!openaiApiKey) {
@@ -160,24 +187,30 @@ serve(async (req) => {
     // Extract the last user message
     const lastMessage = messages[messages.length - 1].content.toLowerCase();
     
-    // Fetch electoral plans for context
-    const electoralPlans = await fetchElectoralPlans();
+    // Fetch electoral plans for context, applying filters if provided
+    const electoralPlans = await fetchElectoralPlans(candidateFilter);
     const planContext = formatElectoralPlansForContext(electoralPlans);
     
+    // Extract topics from the query
+    const topicsFromQuery = extractTopicsFromQuery(lastMessage);
+    console.log(`Tópicos identificados na consulta: ${topicsFromQuery.join(', ') || 'nenhum específico'}`);
+    
     // Identify party/candidate references
-    let partyReference = null;
-    if (lastMessage.includes("psd") || lastMessage.includes("social democrata")) {
-      partyReference = "psd";
-    } else if (lastMessage.includes("ps") || lastMessage.includes("socialista")) {
-      partyReference = "ps";
-    } else if (lastMessage.includes("be") || lastMessage.includes("bloco")) {
-      partyReference = "be";
-    } else if (lastMessage.includes("cdu") || lastMessage.includes("comunista") || lastMessage.includes("pcp")) {
-      partyReference = "cdu";
-    } else if (lastMessage.includes("il") || lastMessage.includes("iniciativa liberal")) {
-      partyReference = "il";
-    } else if (lastMessage.includes("chega")) {
-      partyReference = "chega";
+    let partyReference = candidateFilter ? candidateFilter[0] : null;
+    if (!partyReference) {
+      if (lastMessage.includes("psd") || lastMessage.includes("social democrata")) {
+        partyReference = "psd";
+      } else if (lastMessage.includes("ps") || lastMessage.includes("socialista")) {
+        partyReference = "ps";
+      } else if (lastMessage.includes("be") || lastMessage.includes("bloco")) {
+        partyReference = "be";
+      } else if (lastMessage.includes("cdu") || lastMessage.includes("comunista") || lastMessage.includes("pcp")) {
+        partyReference = "cdu";
+      } else if (lastMessage.includes("il") || lastMessage.includes("iniciativa liberal")) {
+        partyReference = "il";
+      } else if (lastMessage.includes("chega")) {
+        partyReference = "chega";
+      }
     }
 
     try {
@@ -194,7 +227,9 @@ serve(async (req) => {
             // Add a custom system message with electoral plan context
             {
               role: "system",
-              content: `Você é um assistente especializado em política portuguesa que responde com base em informações detalhadas sobre planos eleitorais. Analise cuidadosamente todas as informações disponíveis, incluindo propostas detalhadas, resumos e tópicos. 
+              content: `Você é um assistente especializado em política portuguesa que responde com base em informações detalhadas sobre planos eleitorais. Analise cuidadosamente as informações disponíveis${candidateFilter ? ' sobre os candidatos/partidos especificados' : ''}, incluindo propostas detalhadas, resumos e tópicos. 
+
+${topicsFromQuery.length > 0 ? `Foque especificamente nos seguintes tópicos: ${topicsFromQuery.join(', ')}.` : ''}
 
 Aqui estão os planos eleitorais disponíveis, incluindo suas propostas detalhadas:
 
@@ -225,8 +260,8 @@ Utilize TODAS as informações disponíveis (especialmente as PROPOSTAS DETALHAD
     } catch (openaiError) {
       console.error("Erro ao chamar a API OpenAI, usando resposta de fallback:", openaiError);
       
-      // Generate fallback based on electoral plans data
-      const fallbackContent = await generateFallbackFromElectoralPlans(lastMessage, partyReference);
+      // Generate fallback based on electoral plans data, using filters
+      const fallbackContent = await generateFallbackFromElectoralPlans(lastMessage, candidateFilter);
       
       // Creating a response in the format that the client expects
       const fallbackResponse = {

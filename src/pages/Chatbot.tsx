@@ -24,11 +24,36 @@ const SUGGESTED_QUESTIONS = [
   "Que reformas educacionais estão a ser propostas?"
 ];
 
+// Perguntas específicas por partido
+const PARTY_SPECIFIC_QUESTIONS = {
+  "PSD": [
+    "Quais são as propostas do PSD para a saúde?",
+    "Como o PSD planeia resolver a crise habitacional?",
+    "O que propõe o PSD para a economia portuguesa?"
+  ],
+  "PS": [
+    "Quais são as principais medidas do PS para a educação?",
+    "Como o PS pretende abordar as questões ambientais?",
+    "Que propostas tem o PS para os trabalhadores?"
+  ],
+  "BE": [
+    "Quais são as propostas do Bloco para a habitação?",
+    "O que defende o BE na área da saúde?",
+    "Como o Bloco pretende combater as desigualdades?"
+  ],
+  "CDU": [
+    "Quais são as propostas da CDU para os trabalhadores?",
+    "O que defende a CDU para os serviços públicos?",
+    "Como a CDU planeia desenvolver a economia nacional?"
+  ]
+};
+
 const Chatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [activeParty, setActiveParty] = useState<string | null>(null);
 
   // Add initial welcome message when component mounts
   useEffect(() => {
@@ -72,17 +97,20 @@ const Chatbot = () => {
       // Get response from OpenAI
       const response = await getChatCompletion(inputValue, previousMessages as any);
       const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: `bot-${Date.now()}`, // Use a more unique ID format
         type: "bot",
         text: response,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, botMessage]);
+      
+      // Update active party based on the query
+      updateActivePartyFromQuery(inputValue);
     } catch (error) {
       console.error("Error in chat:", error);
       // Add error message
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: `error-${Date.now()}`, // Use a more unique ID format
         type: "bot",
         text: "Desculpe, não consegui processar o seu pedido. Por favor, tente novamente com uma pergunta sobre os planos eleitorais.",
         timestamp: new Date()
@@ -96,7 +124,7 @@ const Chatbot = () => {
   const handleSuggestedQuestion = async (question: string) => {
     // Add user message
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}`, // Use a more unique ID format
       type: "user",
       text: question,
       timestamp: new Date()
@@ -114,17 +142,20 @@ const Chatbot = () => {
       // Get response from OpenAI
       const response = await getChatCompletion(question, previousMessages as any);
       const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: `bot-${Date.now()}`, // Use a more unique ID format
         type: "bot",
         text: response,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, botMessage]);
+      
+      // Update active party based on the query
+      updateActivePartyFromQuery(question);
     } catch (error) {
       console.error("Error in chat:", error);
       // Add error message
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: `error-${Date.now()}`, // Use a more unique ID format
         type: "bot",
         text: "Desculpe, não consegui processar o seu pedido. Por favor, tente novamente mais tarde.",
         timestamp: new Date()
@@ -134,6 +165,35 @@ const Chatbot = () => {
       setIsLoading(false);
     }
   };
+  
+  // Function to extract party from query and set active party
+  const updateActivePartyFromQuery = (query: string) => {
+    const lowerQuery = query.toLowerCase();
+    
+    if (lowerQuery.includes("psd") || lowerQuery.includes("social democrata")) {
+      setActiveParty("PSD");
+    } else if (lowerQuery.includes("ps") || lowerQuery.includes("socialista")) {
+      setActiveParty("PS");
+    } else if (lowerQuery.includes("be") || lowerQuery.includes("bloco")) {
+      setActiveParty("BE");
+    } else if (lowerQuery.includes("cdu") || lowerQuery.includes("comunista") || lowerQuery.includes("pcp")) {
+      setActiveParty("CDU");
+    } else if (lowerQuery.includes("il") || lowerQuery.includes("iniciativa liberal")) {
+      setActiveParty("IL");
+    } else if (lowerQuery.includes("chega")) {
+      setActiveParty("CHEGA");
+    }
+  };
+  
+  // Decide which specific questions to show
+  const getPartySpecificQuestions = () => {
+    if (activeParty && PARTY_SPECIFIC_QUESTIONS[activeParty as keyof typeof PARTY_SPECIFIC_QUESTIONS]) {
+      return PARTY_SPECIFIC_QUESTIONS[activeParty as keyof typeof PARTY_SPECIFIC_QUESTIONS];
+    }
+    return null;
+  };
+  
+  const partySpecificQuestions = getPartySpecificQuestions();
   
   return <div className="min-h-screen pb-20 bg-gray-50 dark:bg-gray-900">
       <Navbar />
@@ -166,9 +226,29 @@ const Chatbot = () => {
                   Perguntas Sugeridas
                 </h3>
                 <div className="space-y-2">
+                  {/* Show party-specific questions if a party is active */}
+                  {activeParty && partySpecificQuestions ? (
+                    <>
+                      <div className="text-sm font-medium text-election-blue mb-1">
+                        Perguntas sobre {activeParty}:
+                      </div>
+                      {partySpecificQuestions.map((question, index) => (
+                        <button 
+                          key={`party-${index}`}
+                          onClick={() => handleSuggestedQuestion(question)}
+                          className="text-sm text-left w-full p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          {question}
+                        </button>
+                      ))}
+                      <div className="border-t border-gray-200 my-2"></div>
+                    </>
+                  ) : null}
+                  
+                  {/* Always show general questions */}
                   {SUGGESTED_QUESTIONS.map((question, index) => (
                     <button 
-                      key={index}
+                      key={`general-${index}`}
                       onClick={() => handleSuggestedQuestion(question)}
                       className="text-sm text-left w-full p-2 rounded-lg hover:bg-gray-100 transition-colors"
                     >
