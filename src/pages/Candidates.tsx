@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import { BarChart3, User, FileText, TrendingUp, MessageCircle, Search, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 interface Sentiment {
   positive: number;
   neutral: number;
   negative: number;
 }
-
 interface Candidate {
   id: string;
   candidate_name: string;
@@ -21,13 +18,11 @@ interface Candidate {
   topics: string[];
   sentiment?: Sentiment;
 }
-
 interface SentimentBarProps {
   value: number;
   color: string;
   label: string;
 }
-
 const SentimentBar: React.FC<SentimentBarProps> = ({
   value,
   color,
@@ -43,7 +38,6 @@ const SentimentBar: React.FC<SentimentBarProps> = ({
       <div className="w-10 text-right text-xs text-gray-600">{value}%</div>
     </div>;
 };
-
 const Candidates = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,7 +55,6 @@ const Candidates = () => {
       });
     }
   });
-
   useEffect(() => {
     async function fetchCandidates() {
       setIsLoading(true);
@@ -99,13 +92,11 @@ const Candidates = () => {
     }
     fetchCandidates();
   }, []);
-
   const filteredCandidates = candidates.filter(candidate => {
     const matchesSearch = candidate.candidate_name.toLowerCase().includes(searchTerm.toLowerCase()) || candidate.party.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTopic = selectedTopic === "Todos" || candidate.topics && Array.isArray(candidate.topics) && candidate.topics.includes(selectedTopic);
     return matchesSearch && matchesTopic;
   });
-
   return <div className="min-h-screen pb-20">
       <Navbar />
       
@@ -138,17 +129,7 @@ const Candidates = () => {
                 <input type="text" placeholder="Pesquisar candidatos ou partidos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-election-blue/20 focus:border-election-blue transition-all duration-300" />
               </div>
               
-              <div className="flex-shrink-0">
-                <select 
-                  value={selectedTopic} 
-                  onChange={e => setSelectedTopic(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-election-blue/20 focus:border-election-blue bg-white"
-                >
-                  {allTopics.map(topic => (
-                    <option key={topic} value={topic}>{topic}</option>
-                  ))}
-                </select>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -208,13 +189,10 @@ const Candidates = () => {
                     </div>}
                   
                   <div className="flex justify-end mt-4">
-                    <Link 
-                      to={`/candidate/${candidate.id}`}
-                      className="text-sm text-election-blue hover:underline flex items-center"
-                    >
+                    <button className="text-sm text-election-blue hover:underline flex items-center">
                       Ver perfil detalhado
                       <TrendingUp size={14} className="ml-1" />
-                    </Link>
+                    </button>
                   </div>
                 </motion.div>)}
             </div> : <div className="text-center py-20">
@@ -229,5 +207,4 @@ const Candidates = () => {
       </section>
     </div>;
 };
-
 export default Candidates;
