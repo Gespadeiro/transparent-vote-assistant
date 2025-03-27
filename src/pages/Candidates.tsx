@@ -101,7 +101,7 @@ const Candidates = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 px-[12px]">
+      <section className="pt-32 pb-2 px-[12px]">
         <div className="container mx-auto">
           <motion.div initial={{
           opacity: 0,
