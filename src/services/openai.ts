@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -32,7 +33,7 @@ export const getChatCompletion = async (
     const messages: ChatMessage[] = [
       {
         role: "system",
-        content: "You are an election assistant that provides accurate, factual information about the electoral process, candidates, and policies. Be concise and helpful."
+        content: "You are an electoral plans assistant that provides accurate information based on the electoral plans in the database. Stick to information from the plans and avoid speculating."
       },
       ...previousMessages,
       { role: "user", content: prompt }
@@ -61,51 +62,30 @@ export const getChatCompletion = async (
     return data.choices[0].message.content;
   } catch (error) {
     console.error("Error getting chat completion:", error);
-    toast.error("Failed to get a response from the AI. Please try again.");
+    toast.error("Failed to get information from electoral plans. Please try again.");
     
     // Return a fallback response when the API call fails
-    return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again in a moment.";
+    return "I'm sorry, I couldn't access the electoral plans information at the moment. Please try asking a different question or try again later.";
   }
 };
 
-// Provides mock responses when needed for testing
-const getMockResponse = (prompt: string): string => {
-  const normalizedPrompt = prompt.toLowerCase();
-  
-  // Return the existing mock responses if we have them
-  for (const question in BOT_RESPONSES) {
-    if (normalizedPrompt === question.toLowerCase()) {
-      return BOT_RESPONSES[question];
-    }
-  }
-  
-  // Check for partial matches
-  for (const question in BOT_RESPONSES) {
-    if (normalizedPrompt.includes(question.toLowerCase().split(" ")[0])) {
-      return BOT_RESPONSES[question];
-    }
-  }
-  
-  return "I don't have specific information on that topic yet. I'm continuously learning to provide better answers about the election process and candidates. Feel free to try another question or check back later.";
-};
-
-// Mock responses for testing (same as the ones currently in Chatbot.tsx)
+// Updated mock responses focused on electoral plans
 const BOT_RESPONSES: Record<string, string> = {
-  "How does the electoral process work?": 
-    "The electoral process involves several stages: voter registration, candidate nomination, campaigning, voting, and result declaration. Each citizen aged 18 and above can register to vote. Elections are held on scheduled dates where voters cast ballots for their preferred candidates. The votes are then counted, and winners are declared according to the electoral system in place.",
+  "what are the main policy differences between psd and ps?": 
+    "Based on the electoral plans in our database, PSD tends to focus more on economic policies like tax reduction for families and businesses, healthcare reform through public-private partnerships, and administrative decentralization. PS typically emphasizes strengthening the social state, gradual minimum wage increases, public housing investment, and renewable energy.",
   
-  "What are the main policy differences between candidates?": 
-    "The main policy differences between candidates typically revolve around approaches to economy, healthcare, education, and environment. Progressive candidates generally advocate for expanded public services and stronger regulations, while conservative candidates often support smaller government and free-market solutions. Centrist candidates typically seek balanced approaches that incorporate elements from both perspectives.",
+  "what are the economic proposals in the electoral plans?": 
+    "The economic proposals in the electoral plans vary by party. Generally, they include tax reform measures, strategies for economic growth, approaches to public investment, and policies for job creation. Some plans emphasize public investment while others focus on private sector incentives.",
   
-  "When is the next election day?": 
-    "The next election is scheduled for November 5, 2024. This will be a general election for national and state offices. Polls will be open from 7:00 AM to 8:00 PM in most locations. Early voting options may be available in your area starting two weeks before election day.",
+  "what healthcare reforms are candidates proposing?": 
+    "Healthcare reform proposals in the electoral plans typically address waiting list reduction, healthcare professional hiring, and service quality improvement. Some plans propose public-private partnerships, while others emphasize strengthening the public system exclusively.",
   
-  "What documents do I need to vote?": 
-    "To vote, you typically need a government-issued photo ID such as a driver's license, passport, or voter identification card. Requirements vary by jurisdiction, so it's best to check with your local election office. Some locations also accept utility bills, bank statements, or government checks as proof of identity and residence.",
+  "what environmental policies are in the electoral plans?": 
+    "The environmental policies in electoral plans include sustainable infrastructure investment, renewable energy development, climate goal achievement measures, and approaches to environmental protection. The specifics vary by candidate and party.",
   
-  "How can I check my voter registration status?": 
-    "You can check your voter registration status through your state's election website, or through national resources like vote.org. You'll need to provide basic information such as your name, date of birth, and address. If you find you're not registered, many states offer online registration options.",
+  "how do the candidates plan to address housing issues?": 
+    "Housing proposals in the electoral plans include public housing construction, rent regulation mechanisms, incentives for affordable housing development, and measures to address housing shortages. Approaches differ based on party ideology.",
   
-  "What are the main environmental proposals?": 
-    "The main environmental proposals from candidates include approaches to climate change, conservation, and sustainable development. Progressive candidates typically support aggressive carbon reduction targets, renewable energy investments, and stronger environmental regulations. Conservative candidates often favor market-based solutions and balancing environmental protection with economic growth. All major candidates acknowledge the importance of clean air and water protections."
+  "what educational reforms are being proposed?": 
+    "Educational reform proposals typically include public education system strengthening, school digitalization and modernization, teacher value enhancement, and educational quality improvement strategies, with variation between progressive and conservative approaches."
 };

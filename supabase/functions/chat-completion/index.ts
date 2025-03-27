@@ -1,14 +1,19 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Fallback respostas pré-definidas para candidatos portugueses
+// Fallback responses for when we can't get electoral plan data or OpenAI is unavailable
 const fallbackResponses = {
   "geral": [
     "Defesa de um plano de emergência para o Serviço Nacional de Saúde, incluindo redução das listas de espera e contratação de mais profissionais.",
@@ -61,6 +66,74 @@ const fallbackResponses = {
   ]
 };
 
+async function fetchElectoralPlans() {
+  try {
+    const { data, error } = await supabase
+      .from('electoral_plans')
+      .select('candidate_name, party, summary, topics, proposals');
+    
+    if (error) {
+      console.error("Error fetching electoral plans:", error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Exception fetching electoral plans:", error);
+    return null;
+  }
+}
+
+function formatElectoralPlansForContext(plans) {
+  if (!plans || plans.length === 0) {
+    return "No electoral plans available.";
+  }
+  
+  return plans.map(plan => {
+    const topics = Array.isArray(plan.topics) ? plan.topics.join(", ") : plan.topics;
+    
+    return `
+CANDIDATE: ${plan.candidate_name}
+PARTY: ${plan.party}
+SUMMARY: ${plan.summary || "No summary available"}
+TOPICS: ${topics || "No topics available"}
+PROPOSALS: ${plan.proposals || "No detailed proposals available"}
+---
+`;
+  }).join("\n");
+}
+
+async function generateFallbackFromElectoralPlans(query, party = null) {
+  const plans = await fetchElectoralPlans();
+  
+  if (!plans || plans.length === 0) {
+    // If we can't get plans data, use static fallbacks
+    const partyKey = party ? party.toLowerCase() : "geral";
+    return fallbackResponses[partyKey] || fallbackResponses.geral;
+  }
+  
+  let relevantPlans = plans;
+  
+  // Filter by party if specified
+  if (party) {
+    relevantPlans = plans.filter(p => 
+      p.party.toLowerCase().includes(party.toLowerCase()) || 
+      p.candidate_name.toLowerCase().includes(party.toLowerCase())
+    );
+    
+    if (relevantPlans.length === 0) {
+      relevantPlans = plans; // Fallback to all plans if no match
+    }
+  }
+  
+  // Generate a cohesive response from the available data
+  const response = relevantPlans.map(plan => {
+    return `Candidato ${plan.candidate_name} (${plan.party}): ${plan.summary || "Sem resumo disponível."}`;
+  }).join("\n\n");
+  
+  return [response];
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -78,23 +151,27 @@ serve(async (req) => {
       throw new Error("OPENAI_API_KEY não está definida");
     }
 
-    // Tenta identificar candidato/partido nas mensagens
-    let fallbackContent: string[] = fallbackResponses.geral;
+    // Extract the last user message
     const lastMessage = messages[messages.length - 1].content.toLowerCase();
     
-    // Verifica se algum partido está mencionado na mensagem
+    // Fetch electoral plans for context
+    const electoralPlans = await fetchElectoralPlans();
+    const planContext = formatElectoralPlansForContext(electoralPlans);
+    
+    // Identify party/candidate references
+    let partyReference = null;
     if (lastMessage.includes("psd") || lastMessage.includes("social democrata")) {
-      fallbackContent = fallbackResponses.psd;
+      partyReference = "psd";
     } else if (lastMessage.includes("ps") || lastMessage.includes("socialista")) {
-      fallbackContent = fallbackResponses.ps;
+      partyReference = "ps";
     } else if (lastMessage.includes("be") || lastMessage.includes("bloco")) {
-      fallbackContent = fallbackResponses.be;
+      partyReference = "be";
     } else if (lastMessage.includes("cdu") || lastMessage.includes("comunista") || lastMessage.includes("pcp")) {
-      fallbackContent = fallbackResponses.cdu;
+      partyReference = "cdu";
     } else if (lastMessage.includes("il") || lastMessage.includes("iniciativa liberal")) {
-      fallbackContent = fallbackResponses.il;
+      partyReference = "il";
     } else if (lastMessage.includes("chega")) {
-      fallbackContent = fallbackResponses.chega;
+      partyReference = "chega";
     }
 
     try {
@@ -108,10 +185,10 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "gpt-4o-mini", // Using a more affordable model with good capabilities
           messages: [
-            // Add a custom system message to focus on Portuguese politics
+            // Add a custom system message with electoral plan context
             {
               role: "system",
-              content: "Você é um assistente especializado em política portuguesa. Você fornece informações precisas sobre candidatos políticos, partidos e propostas eleitorais em Portugal. Todos os seus exemplos e referências devem ser relevantes para o contexto político português. Sempre dê respostas em português europeu."
+              content: `Você é um assistente especializado em política portuguesa que responde apenas com base nas informações fornecidas sobre planos eleitorais. Aqui estão os planos eleitorais disponíveis:\n\n${planContext}\n\nSe não houver informações suficientes para responder a uma pergunta, indique que não possui dados sobre esse tópico. Sempre dê respostas em português europeu.`
             },
             ...messages
           ],
@@ -136,7 +213,10 @@ serve(async (req) => {
     } catch (openaiError) {
       console.error("Erro ao chamar a API OpenAI, usando resposta de fallback:", openaiError);
       
-      // Criando uma resposta no formato que o cliente espera
+      // Generate fallback based on electoral plans data
+      const fallbackContent = await generateFallbackFromElectoralPlans(lastMessage, partyReference);
+      
+      // Creating a response in the format that the client expects
       const fallbackResponse = {
         id: "fallback-response",
         object: "chat.completion",
@@ -168,7 +248,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       error: error.message,
       fallback: true,
-      message: "Estamos a usar respostas pré-definidas devido a problemas com o serviço de IA."
+      message: "Estamos a usar respostas baseadas nos planos eleitorais disponíveis devido a problemas com o serviço de IA."
     }), {
       status: 200, // Mudando para 200 para garantir que o cliente receba a resposta
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -23,14 +22,14 @@ interface Message {
   timestamp: Date;
 }
 
-// Mock suggested questions
+// Better suggested questions focused on electoral plans
 const SUGGESTED_QUESTIONS = [
-  "How does the electoral process work?",
-  "What are the main policy differences between candidates?",
-  "When is the next election day?",
-  "What documents do I need to vote?",
-  "How can I check my voter registration status?",
-  "What are the main environmental proposals?"
+  "What are the main policy differences between PSD and PS?",
+  "What are the economic proposals in the electoral plans?",
+  "What healthcare reforms are candidates proposing?",
+  "What environmental policies are in the electoral plans?",
+  "How do the candidates plan to address housing issues?",
+  "What educational reforms are being proposed?"
 ];
 
 const Chatbot = () => {
@@ -45,7 +44,7 @@ const Chatbot = () => {
       {
         id: "welcome",
         type: "bot",
-        text: "👋 Hello! I'm your election assistant. How can I help you today?",
+        text: "👋 Hello! I'm your electoral plans assistant. I can provide information about candidate proposals and policies based on their electoral plans. How can I help you today?",
         timestamp: new Date()
       }
     ]);
@@ -99,7 +98,7 @@ const Chatbot = () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        text: "Sorry, I couldn't process your request. Please try again later.",
+        text: "Sorry, I couldn't process your request. Please try again with a question about the electoral plans.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -168,11 +167,10 @@ const Chatbot = () => {
             className="text-center mb-8"
           >
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Election Assistant
+              Electoral Plans Assistant
             </h1>
             <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Ask questions about candidates, electoral processes, and proposals to get instant, 
-              AI-powered responses based on verified information.
+              Ask questions about electoral plans, candidate proposals, and policy positions to get information based on the official plans in our database.
             </p>
           </motion.div>
           
@@ -200,8 +198,8 @@ const Chatbot = () => {
                   <div className="flex items-start">
                     <Info size={16} className="mr-2 text-election-blue mt-1 shrink-0" />
                     <p className="text-xs text-gray-600">
-                      This chatbot provides information based on verified data about the election process 
-                      and candidates. Responses are generated using AI and may be refined over time.
+                      This chatbot provides information based on the electoral plans stored in our database. 
+                      All responses are generated using the actual content of candidate proposals and policy positions.
                     </p>
                   </div>
                 </div>
@@ -217,7 +215,7 @@ const Chatbot = () => {
                     <Bot size={16} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="font-medium">Election Assistant</h3>
+                    <h3 className="font-medium">Electoral Plans Assistant</h3>
                     <div className="text-xs text-green-500 flex items-center">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                       Online
@@ -325,7 +323,7 @@ const Chatbot = () => {
                       type="text"
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
-                      placeholder="Type your question..."
+                      placeholder="Ask about electoral plans and policy proposals..."
                       className="flex-1 p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-election-blue/20 focus:border-election-blue transition-all duration-300"
                       disabled={isLoading}
                     />
