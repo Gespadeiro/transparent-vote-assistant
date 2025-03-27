@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -151,7 +150,6 @@ const Admin = () => {
         candidate_name: planData.candidateName || planData.candidate_name,
         party: planData.party,
         summary: planData.summary,
-        topics: Array.isArray(planData.topics) ? planData.topics : (typeof planData.topics === 'string' ? planData.topics.split(',').map(t => t.trim()) : []),
         proposals: planData.proposals,
         original_pdf: planData.original_pdf || null
       };

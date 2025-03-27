@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -44,7 +45,6 @@ const formSchema = z.object({
   candidateName: z.string().min(1, "Nome do candidato é obrigatório"),
   party: z.string().min(1, "Nome do partido é obrigatório"),
   summary: z.string().min(1, "Resumo é obrigatório"),
-  topics: z.string().min(1, "Pelo menos um tópico é obrigatório"),
   proposals: z.string().min(10, "Propostas detalhadas são obrigatórias"),
 });
 
@@ -74,9 +74,6 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
     candidateName: initialData.candidate_name || initialData.candidateName || "",
     party: initialData.party || "",
     summary: initialData.summary || "",
-    topics: Array.isArray(initialData.topics) 
-      ? initialData.topics.join(", ") 
-      : initialData.topics || "",
     proposals: initialData.proposals || "",
   };
 
@@ -348,50 +345,9 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
       : selectedProposalsText;
     
     form.setValue("proposals", updatedProposals, { shouldDirty: true });
-    
-    // Extract topics from the selected proposals to add to the topics field
-    const topicKeywords = extractTopicsFromProposals(selectedResults);
-    const currentTopics = form.getValues("topics");
-    
-    // Add new topics if they don't already exist
-    if (topicKeywords.length > 0) {
-      const existingTopics = currentTopics.split(',').map(t => t.trim());
-      const newTopics = topicKeywords.filter(topic => 
-        !existingTopics.some(existing => existing.toLowerCase() === topic.toLowerCase())
-      );
-      
-      if (newTopics.length > 0) {
-        const updatedTopics = currentTopics 
-          ? `${currentTopics}, ${newTopics.join(', ')}` 
-          : newTopics.join(', ');
-        form.setValue("topics", updatedTopics, { shouldDirty: true });
-      }
-    }
-    
     toast.success(`${selectedResults.length} propostas adicionadas com sucesso`);
     setSearchDialogOpen(false);
     setSelectedResults([]);
-  };
-
-  // Helper function to extract possible topics from proposals
-  const extractTopicsFromProposals = (proposals: string[]): string[] => {
-    const commonTopics = [
-      "Saúde", "Educação", "Economia", "Ambiente", "Habitação", 
-      "Segurança", "Justiça", "Transportes", "Cultura", "Emprego",
-      "Fiscalidade", "Imigração", "Defesa", "Direitos", "Social"
-    ];
-    
-    const extractedTopics = new Set<string>();
-    
-    proposals.forEach(proposal => {
-      commonTopics.forEach(topic => {
-        if (proposal.toLowerCase().includes(topic.toLowerCase())) {
-          extractedTopics.add(topic);
-        }
-      });
-    });
-    
-    return Array.from(extractedTopics);
   };
 
   return (
@@ -443,23 +399,6 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
                 </FormControl>
                 <FormDescription>
                   Forneça um resumo conciso do plano eleitoral (100-200 caracteres)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="topics"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tópicos</FormLabel>
-                <FormControl>
-                  <Input placeholder="Saúde, Economia, Educação..." {...field} />
-                </FormControl>
-                <FormDescription>
-                  Insira tópicos separados por vírgulas
                 </FormDescription>
                 <FormMessage />
               </FormItem>

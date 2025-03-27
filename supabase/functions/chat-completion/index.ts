@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -70,7 +69,7 @@ async function fetchElectoralPlans(candidateFilters = null) {
   try {
     let query = supabase
       .from('electoral_plans')
-      .select('candidate_name, party, summary, topics, proposals');
+      .select('candidate_name, party, summary, proposals');
     
     // Apply filters if candidate or party filters exist
     if (candidateFilters && candidateFilters.length > 0) {
@@ -104,52 +103,14 @@ function formatElectoralPlansForContext(plans) {
   }
   
   return plans.map(plan => {
-    const topics = Array.isArray(plan.topics) ? plan.topics.join(", ") : plan.topics;
-    
     return `
 CANDIDATO: ${plan.candidate_name}
 PARTIDO: ${plan.party}
 RESUMO: ${plan.summary || "Sem resumo disponível"}
-TÓPICOS: ${topics || "Sem tópicos disponíveis"}
 PROPOSTAS DETALHADAS: ${plan.proposals || "Sem propostas detalhadas disponíveis"}
 ---
 `;
   }).join("\n");
-}
-
-async function generateFallbackFromElectoralPlans(query, candidateFilters = null) {
-  const plans = await fetchElectoralPlans(candidateFilters);
-  
-  if (!plans || plans.length === 0) {
-    // If we can't get plans data or no matching plans, use static fallbacks
-    if (candidateFilters && candidateFilters.length > 0) {
-      // Try to find a match in our static fallbacks
-      for (const filter of candidateFilters) {
-        const lowerFilter = filter.toLowerCase();
-        for (const [key, responses] of Object.entries(fallbackResponses)) {
-          if (key.toLowerCase().includes(lowerFilter)) {
-            return responses;
-          }
-        }
-      }
-    }
-    
-    // If no specific match, return general fallback
-    return fallbackResponses.geral;
-  }
-  
-  // Generate a cohesive response from the available data
-  const response = plans.map(plan => {
-    let detailedResponse = `Candidato ${plan.candidate_name} (${plan.party}): ${plan.summary || "Sem resumo disponível."}\n\n`;
-    
-    if (plan.proposals) {
-      detailedResponse += `Propostas detalhadas: ${plan.proposals}\n\n`;
-    }
-    
-    return detailedResponse;
-  }).join("\n\n");
-  
-  return [response];
 }
 
 function extractTopicsFromQuery(query) {
@@ -227,7 +188,7 @@ serve(async (req) => {
             // Add a custom system message with electoral plan context
             {
               role: "system",
-              content: `Você é um assistente especializado em política portuguesa que responde com base em informações detalhadas sobre planos eleitorais. Analise cuidadosamente as informações disponíveis${candidateFilter ? ' sobre os candidatos/partidos especificados' : ''}, incluindo propostas detalhadas, resumos e tópicos. 
+              content: `Você é um assistente especializado em política portuguesa que responde com base em informações detalhadas sobre planos eleitorais. Analise cuidadosamente as informações disponíveis${candidateFilter ? ' sobre os candidatos/partidos especificados' : ''}, incluindo propostas detalhadas e resumos. 
 
 ${topicsFromQuery.length > 0 ? `Foque especificamente nos seguintes tópicos: ${topicsFromQuery.join(', ')}.` : ''}
 

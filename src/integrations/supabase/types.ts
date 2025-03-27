@@ -80,7 +80,6 @@ export type Database = {
           party: string
           proposals: string | null
           summary: string | null
-          topics: Json | null
           updated_at: string
         }
         Insert: {
@@ -91,7 +90,6 @@ export type Database = {
           party: string
           proposals?: string | null
           summary?: string | null
-          topics?: Json | null
           updated_at?: string
         }
         Update: {
@@ -102,7 +100,6 @@ export type Database = {
           party?: string
           proposals?: string | null
           summary?: string | null
-          topics?: Json | null
           updated_at?: string
         }
         Relationships: []
