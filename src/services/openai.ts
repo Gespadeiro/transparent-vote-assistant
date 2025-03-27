@@ -1,6 +1,7 @@
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface ChatMessage {
+export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
 }
@@ -27,9 +28,6 @@ export const getChatCompletion = async (
   previousMessages: ChatMessage[] = []
 ): Promise<string> => {
   try {
-    // Your predefined API key - replace this with your actual OpenAI API key
-    const apiKey = "your-openai-api-key-here"; // Replace this with your actual API key
-    
     // Prepare the messages for the API
     const messages: ChatMessage[] = [
       {
@@ -40,29 +38,26 @@ export const getChatCompletion = async (
       { role: "user", content: prompt }
     ];
 
-    // If using mock responses for testing, uncomment this
-    // return getMockResponse(prompt);
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        messages,
-        model: "gpt-4o-mini", // Using a modern OpenAI model
-        temperature: 0.7,
-        max_tokens: 500,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || "OpenAI API request failed");
+    // For testing purposes, we can use the mock responses
+    if (process.env.NODE_ENV === 'development' && prompt.toLowerCase() in BOT_RESPONSES) {
+      return BOT_RESPONSES[prompt.toLowerCase()];
     }
 
-    const data: ChatCompletionResponse = await response.json();
+    // Call the Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('chat-completion', {
+      body: {
+        messages,
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+        max_tokens: 500,
+      },
+    });
+
+    if (error) {
+      console.error("Error calling chat-completion function:", error);
+      throw new Error(error.message || "Failed to call OpenAI service");
+    }
+
     return data.choices[0].message.content;
   } catch (error) {
     console.error("Error getting chat completion:", error);
