@@ -40,7 +40,7 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
     if (file) {
       // Check if the file is a PDF
       if (file.type !== "application/pdf") {
-        toast.error("Please upload a PDF file");
+        toast.error("Por favor, carregue um ficheiro PDF");
         return;
       }
       
@@ -60,36 +60,56 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
           setTimeout(() => {
             // Simulate extracted content - in a real implementation 
             // this would come from an API or edge function that parses the PDF
-            const mockedProposals = `Electoral Proposals extracted from ${file.name}:
+            const mockedProposals = `Propostas Eleitorais extraídas de ${file.name}:
             
-1. Economic Development Plan
-   - Create new jobs through infrastructure investment
-   - Reduce small business taxes by 5%
-   - Implement worker retraining programs
+1. Plano de Desenvolvimento Económico
+   - Criação de novos postos de trabalho através de investimento em infraestruturas
+   - Redução de impostos para pequenas empresas em 5%
+   - Implementação de programas de requalificação profissional
+   - Criação de zonas económicas especiais nas regiões do interior
+   - Incentivos fiscais para empresas que contratem jovens até aos 30 anos
+   - Redução da burocracia para abertura de novas empresas
 
-2. Healthcare Initiative
-   - Expand coverage for preventative care
-   - Reduce prescription drug costs
-   - Fund rural healthcare facilities
+2. Iniciativa de Saúde
+   - Expansão da cobertura para cuidados preventivos
+   - Redução dos custos dos medicamentos prescritos
+   - Financiamento de unidades de saúde em zonas rurais
+   - Contratação de mais 1.500 profissionais de saúde para o SNS
+   - Redução das listas de espera em 30% nos próximos dois anos
+   - Modernização dos equipamentos hospitalares em todo o país
 
-3. Environmental Protection
-   - Increase renewable energy investment
-   - Implement stricter pollution controls
-   - Create conservation programs for public lands
+3. Proteção Ambiental
+   - Aumento do investimento em energias renováveis
+   - Implementação de controlos mais rigorosos sobre a poluição
+   - Criação de programas de conservação para terrenos públicos
+   - Desenvolvimento de um plano nacional para a neutralidade carbónica até 2045
+   - Incentivos à utilização de transportes públicos e veículos elétricos
+   - Proteção das áreas naturais protegidas e expansão da área florestal
 
-4. Education Reform
-   - Increase teacher salaries
-   - Modernize school infrastructure
-   - Expand early childhood education programs`;
+4. Reforma Educativa
+   - Aumento dos salários dos professores
+   - Modernização das infraestruturas escolares
+   - Expansão dos programas de educação pré-escolar
+   - Revisão curricular focada em competências digitais e pensamento crítico
+   - Redução do número de alunos por turma para máximo de 20
+   - Programa de requalificação digital para todos os estabelecimentos de ensino
+
+5. Políticas de Habitação
+   - Construção de 10.000 novas habitações a preços acessíveis
+   - Regulação mais rigorosa do mercado de arrendamento
+   - Incentivos fiscais para renovação de imóveis degradados nos centros urbanos
+   - Programa especial de apoio à primeira habitação para jovens
+   - Limitação da especulação imobiliária em zonas de alta pressão habitacional
+   - Revitalização de zonas habitacionais degradadas`;
             
             setExtractedProposals(mockedProposals);
             setExtractingContent(false);
-            toast.success("Successfully extracted content from PDF");
+            toast.success("Conteúdo extraído com sucesso do PDF");
           }, 2000);
           
         } catch (error) {
-          console.error("Error extracting PDF content:", error);
-          toast.error("Failed to extract content from PDF");
+          console.error("Erro ao extrair conteúdo do PDF:", error);
+          toast.error("Falha ao extrair conteúdo do PDF");
           setExtractingContent(false);
         }
       }
@@ -100,12 +120,12 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
     e.preventDefault();
     
     if (!selectedFile) {
-      toast.error("Please upload a PDF file");
+      toast.error("Por favor, carregue um ficheiro PDF");
       return;
     }
     
     if (!candidateName || !party) {
-      toast.error("Please fill in all required fields");
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
@@ -120,8 +140,8 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
       const planData = {
         candidate_name: candidateName,
         party: party,
-        summary: `Electoral plan for ${candidateName} (${party})`,
-        topics: ["Economy", "Healthcare", "Environment", "Education"],
+        summary: `Plano eleitoral para ${candidateName} (${party})`,
+        topics: ["Economia", "Saúde", "Ambiente", "Educação", "Habitação"],
         proposals: extractedProposals, // Use the extracted proposals
         original_pdf: selectedFile.name
       };
@@ -134,17 +154,17 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
         .single();
         
       if (error) {
-        console.error("Error inserting electoral plan:", error);
+        console.error("Erro ao inserir plano eleitoral:", error);
         throw error;
       }
       
       onPdfProcessed(data);
-      toast.success("Electoral plan added successfully");
+      toast.success("Plano eleitoral adicionado com sucesso");
       resetForm();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error processing PDF:", error);
-      toast.error("Error saving electoral plan. Please try again.");
+      console.error("Erro ao processar PDF:", error);
+      toast.error("Erro ao guardar plano eleitoral. Por favor, tente novamente.");
     } finally {
       setUploading(false);
     }
@@ -161,37 +181,37 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Upload Electoral Plan PDF</DialogTitle>
+          <DialogTitle>Carregar PDF de Plano Eleitoral</DialogTitle>
           <DialogDescription>
-            Upload a PDF containing the electoral plan. Our system will process and extract key proposals.
+            Carregue um PDF contendo o plano eleitoral. O nosso sistema irá processar e extrair as principais propostas.
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="candidateName">Candidate Name</Label>
+            <Label htmlFor="candidateName">Nome do Candidato</Label>
             <Input
               id="candidateName"
               value={candidateName}
               onChange={(e) => setCandidateName(e.target.value)}
-              placeholder="Enter candidate name"
+              placeholder="Introduza o nome do candidato"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="party">Political Party</Label>
+            <Label htmlFor="party">Partido Político</Label>
             <Input
               id="party"
               value={party}
               onChange={(e) => setParty(e.target.value)}
-              placeholder="Enter political party"
+              placeholder="Introduza o partido político"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="pdf">Electoral Plan PDF</Label>
+            <Label htmlFor="pdf">PDF do Plano Eleitoral</Label>
             
             {selectedFile ? (
               <Card className="p-3 relative">
@@ -227,9 +247,9 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
                   <div className="mx-auto flex flex-col items-center">
                     <FileUp className="h-8 w-8 text-gray-400 mb-2" />
                     <p className="text-sm font-medium">
-                      Click to upload or drag and drop
+                      Clique para carregar ou arraste e solte
                     </p>
-                    <p className="text-xs text-gray-500">PDF (up to 10MB)</p>
+                    <p className="text-xs text-gray-500">PDF (até 10MB)</p>
                   </div>
                 </Label>
               </div>
@@ -239,18 +259,18 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
           {extractingContent && (
             <div className="text-center py-3">
               <div className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent mr-2"></div>
-              <span className="text-sm">Extracting proposals from PDF...</span>
+              <span className="text-sm">A extrair propostas do PDF...</span>
             </div>
           )}
 
           {extractedProposals && (
             <div className="space-y-2">
-              <Label>Extracted Proposals</Label>
+              <Label>Propostas Extraídas</Label>
               <div className="border rounded-md p-3 bg-gray-50 max-h-[200px] overflow-y-auto text-sm whitespace-pre-line">
                 {extractedProposals}
               </div>
               <p className="text-xs text-gray-500">
-                These proposals will be automatically added to the electoral plan.
+                Estas propostas serão automaticamente adicionadas ao plano eleitoral.
               </p>
             </div>
           )}
@@ -262,18 +282,18 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
               onClick={() => onOpenChange(false)}
               disabled={uploading}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" disabled={!selectedFile || uploading || extractingContent}>
               {uploading ? (
                 <>
                   <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                  Processing...
+                  A processar...
                 </>
               ) : (
                 <>
                   <Upload className="mr-2 h-4 w-4" />
-                  Save Plan
+                  Guardar Plano
                 </>
               )}
             </Button>
