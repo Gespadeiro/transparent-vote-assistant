@@ -43,16 +43,15 @@ serve(async (req) => {
   }
 
   try {
-    const { pdfContent, partyName, candidateName } = await req.json();
+    const requestData = await req.json();
+    const { pdfContent, partyName, candidateName } = requestData;
 
     if (!pdfContent) {
       throw new Error("PDF content is required");
     }
 
     console.log(`Processing electoral PDF for ${candidateName} (${partyName})`);
-
-    // In a real implementation, we would send the PDF content to an AI model that can process PDFs
-    // For now, since we're mocking this up, we'll simulate processing with text analysis using OpenAI
+    console.log(`PDF content length: ${pdfContent.length} characters`);
 
     // Prepare a request to the OpenAI API
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -89,6 +88,7 @@ serve(async (req) => {
     const processedContent = aiResponse.choices[0].message.content;
 
     console.log("Successfully processed electoral PDF");
+    console.log("Processed content length:", processedContent.length);
 
     return new Response(
       JSON.stringify({

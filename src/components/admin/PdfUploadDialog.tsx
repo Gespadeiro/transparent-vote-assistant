@@ -51,13 +51,18 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
         setExtractingContent(true);
         
         try {
-          // Read the file content
-          const fileContent = await readFileAsText(file);
+          // Read the file content as ArrayBuffer
+          const fileContent = await readFileAsArrayBuffer(file);
+          
+          // Convert ArrayBuffer to Base64
+          const base64Content = arrayBufferToBase64(fileContent);
+          
+          console.log("Sending PDF content to process-electoral-pdf function");
           
           // Call the Supabase Edge Function to process the PDF
           const { data, error } = await supabase.functions.invoke('process-electoral-pdf', {
             body: {
-              pdfContent: fileContent,
+              pdfContent: base64Content,
               partyName: party || "Partido",
               candidateName: candidateName || "Candidato"
             },
@@ -72,6 +77,7 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
             setExtractedProposals(data.processedContent);
             toast.success("Conteúdo extraído com sucesso do PDF");
           } else {
+            console.error("Resposta inesperada:", data);
             throw new Error("Resposta inesperada ao processar o PDF");
           }
         } catch (error) {
@@ -84,23 +90,36 @@ const PdfUploadDialog: React.FC<PdfUploadDialogProps> = ({
     }
   };
 
-  // Helper function to read file as text
-  const readFileAsText = (file: File): Promise<string> => {
+  // Helper function to read file as ArrayBuffer
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
       reader.onload = (event) => {
-        if (event.target && typeof event.target.result === 'string') {
+        if (event.target && event.target.result instanceof ArrayBuffer) {
           resolve(event.target.result);
         } else {
-          reject(new Error("Failed to read file as text"));
+          reject(new Error("Failed to read file as ArrayBuffer"));
         }
       };
       
       reader.onerror = () => reject(new Error("Error reading file"));
       
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     });
+  };
+
+  // Helper function to convert ArrayBuffer to Base64
+  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    
+    return btoa(binary);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
