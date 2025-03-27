@@ -65,6 +65,8 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResult, setSelectedResult] = useState("");
+  const [customPrompt, setCustomPrompt] = useState<string>("");
+  const [promptDialogOpen, setPromptDialogOpen] = useState(false);
 
   // Convert topics array to comma-separated string for form
   const defaultValues = {
@@ -89,6 +91,23 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
       topics: values.topics.split(",").map(topic => topic.trim()),
     };
     onSave(formattedData);
+  };
+
+  const getDefaultPrompt = (candidateName: string, partyName: string) => {
+    return `Provide a summary of key proposals and policy positions for ${candidateName} of the ${partyName} party. Format the response as 4-5 clear, separate bullet points that could be added to an electoral plan database. Each bullet point should focus on a different policy area.`;
+  };
+
+  const handleOpenPromptDialog = () => {
+    const candidateName = form.getValues("candidateName");
+    const partyName = form.getValues("party");
+    
+    if (!candidateName) {
+      toast.error("Please enter a candidate name first");
+      return;
+    }
+
+    setCustomPrompt(getDefaultPrompt(candidateName, partyName));
+    setPromptDialogOpen(true);
   };
 
   const handleSearch = async () => {
@@ -116,7 +135,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
             },
             {
               role: "user",
-              content: `Provide a summary of key proposals and policy positions for ${candidateName} of the ${partyName} party. Format the response as 4-5 clear, separate bullet points that could be added to an electoral plan database. Each bullet point should focus on a different policy area.`
+              content: customPrompt || getDefaultPrompt(candidateName, partyName)
             }
           ],
           temperature: 0.7,
@@ -247,7 +266,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
                           type="button" 
                           variant="outline" 
                           size="sm" 
-                          onClick={handleSearch}
+                          onClick={handleOpenPromptDialog}
                           className="flex items-center gap-1"
                         >
                           <Search size={14} />
@@ -288,6 +307,50 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
         </form>
       </Form>
 
+      {/* Custom Prompt Dialog */}
+      <Dialog open={promptDialogOpen} onOpenChange={setPromptDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Customize Search Prompt</DialogTitle>
+            <DialogDescription>
+              Customize the prompt sent to ChatGPT when searching for candidate information
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <Textarea 
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              className="min-h-[150px]"
+              placeholder="Enter your custom prompt for ChatGPT..."
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              The prompt will automatically include the candidate name and party.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setPromptDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                setPromptDialogOpen(false);
+                handleSearch();
+              }}
+              className="gap-1"
+            >
+              <Search size={16} />
+              Search with Custom Prompt
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Search Results Dialog */}
       <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
