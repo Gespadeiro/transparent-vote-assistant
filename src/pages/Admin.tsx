@@ -40,19 +40,16 @@ import {
   Shield,
   FilePlus,
   FileText,
-  Upload,
   Edit,
   Trash2,
   HelpCircle,
   Save,
   PlusCircle,
-  FileUp,
   Loader2,
 } from "lucide-react";
 import ElectoralPlanForm from "@/components/admin/ElectoralPlanForm";
 import QuizQuestionForm from "@/components/admin/QuizQuestionForm";
 import AdminAuth from "@/components/admin/AdminAuth";
-import PdfUploadDialog from "@/components/admin/PdfUploadDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 const Admin = () => {
@@ -62,7 +59,6 @@ const Admin = () => {
   const [editingPlan, setEditingPlan] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [activeTab, setActiveTab] = useState("electoral-plans");
-  const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(false);
@@ -96,7 +92,6 @@ const Admin = () => {
   const fetchQuizQuestions = async () => {
     setIsLoadingQuizzes(true);
     try {
-      // First, get all quiz questions
       const { data: questions, error: questionsError } = await supabase
         .from('quiz_questions')
         .select('*')
@@ -109,7 +104,6 @@ const Admin = () => {
         return;
       }
       
-      // Then, for each question, get its options
       const questionsWithOptions = await Promise.all(
         questions.map(async (question) => {
           const { data: options, error: optionsError } = await supabase
@@ -213,13 +207,7 @@ const Admin = () => {
     }
   };
 
-  const handlePdfProcessed = (data) => {
-    setElectoralPlans([data, ...electoralPlans]);
-  };
-
   const handleSaveQuestion = async (questionData) => {
-    // The actual saving now happens in the QuizQuestionForm component
-    // Here we just update the local state
     if (editingQuestion && editingQuestion.id) {
       setQuizQuestions(
         quizQuestions.map((question) =>
@@ -231,7 +219,6 @@ const Admin = () => {
     }
     setEditingQuestion(null);
     
-    // Refresh the questions from the database to ensure we have the latest data
     fetchQuizQuestions();
   };
 
@@ -242,7 +229,6 @@ const Admin = () => {
 
   const handleDeleteQuestion = async (id) => {
     try {
-      // First delete the options
       const { error: optionsError } = await supabase
         .from('quiz_options')
         .delete()
@@ -250,7 +236,6 @@ const Admin = () => {
         
       if (optionsError) throw optionsError;
       
-      // Then delete the question
       const { error: questionError } = await supabase
         .from('quiz_questions')
         .delete()
@@ -258,7 +243,6 @@ const Admin = () => {
         
       if (questionError) throw questionError;
       
-      // Update the local state
       setQuizQuestions(quizQuestions.filter((question) => question.id !== id));
       toast.success("Quiz question deleted successfully");
     } catch (error) {
@@ -304,17 +288,9 @@ const Admin = () => {
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold">Electoral Plans</h2>
                     <div className="flex gap-2">
-                      <Button 
-                        onClick={() => setIsPdfDialogOpen(true)} 
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        <FileUp size={16} />
-                        Upload PDF
-                      </Button>
                       <Button onClick={() => setEditingPlan({})} className="flex items-center gap-2">
                         <FilePlus size={16} />
-                        Add Manually
+                        Add Plan
                       </Button>
                     </div>
                   </div>
@@ -491,12 +467,6 @@ const Admin = () => {
           )}
         </div>
       </section>
-
-      <PdfUploadDialog 
-        open={isPdfDialogOpen}
-        onOpenChange={setIsPdfDialogOpen}
-        onPdfProcessed={handlePdfProcessed}
-      />
     </div>
   );
 };
