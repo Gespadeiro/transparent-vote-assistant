@@ -156,8 +156,38 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
       setSearchResults(bulletPoints);
     } catch (error) {
       console.error("Erro ao pesquisar informações do candidato:", error);
-      toast.error("Falha ao pesquisar informações do candidato");
-      setSearchResults(["Erro ao recuperar informações. Por favor, tente novamente."]);
+      toast.error("A usar dados fallback devido a problemas com a API OpenAI");
+      
+      // Dados de fallback com base no partido
+      let fallbackData = [
+        "Defesa de um plano de emergência para o Serviço Nacional de Saúde.",
+        "Proposta de reforma fiscal com redução de impostos para a classe média.",
+        "Implementação de medidas para combater a crise habitacional.",
+        "Plano de investimento em infraestruturas sustentáveis e energia renovável.",
+        "Reforço do sistema educativo público."
+      ];
+      
+      // Ajustar os resultados com base no partido, se mencionado
+      const partyLower = partyName.toLowerCase();
+      if (partyLower.includes("social democrata") || partyLower.includes("psd")) {
+        fallbackData = [
+          "Defesa da redução fiscal para famílias e empresas para impulsionar o crescimento.",
+          "Reforma do SNS com parcerias público-privadas para reduzir listas de espera.",
+          "Implementação de incentivos à natalidade e apoio às famílias.",
+          "Programa de descentralização e valorização do interior do país.",
+          "Modernização da administração pública e redução da burocracia."
+        ];
+      } else if (partyLower.includes("socialista") || partyLower.includes("ps")) {
+        fallbackData = [
+          "Reforço do Estado Social e do Serviço Nacional de Saúde.",
+          "Política de aumentos graduais do salário mínimo nacional.",
+          "Investimento em habitação pública e regulação do mercado imobiliário.",
+          "Aposta na transição energética e economia verde.",
+          "Defesa do ensino público de qualidade e valorização dos professores."
+        ];
+      }
+      
+      setSearchResults(fallbackData);
     } finally {
       setIsSearching(false);
     }
@@ -370,25 +400,33 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
               {searchResults.length === 0 ? (
                 <p className="text-center py-8 text-muted-foreground">Nenhum resultado encontrado</p>
               ) : (
-                <Command className="rounded-lg border shadow-md">
-                  <CommandInput placeholder="Filtrar resultados..." />
-                  <CommandList>
-                    <CommandEmpty>Nenhum resultado encontrado</CommandEmpty>
-                    <CommandGroup heading="Selecione informações para adicionar">
-                      {searchResults.map((result, index) => (
-                        <CommandItem
-                          key={index}
-                          onSelect={() => setSelectedResult(result)}
-                          className={`flex items-start gap-2 p-2 ${
-                            selectedResult === result ? "bg-accent" : ""
-                          }`}
-                        >
-                          <div className="flex-1">{result}</div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
+                <div>
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-md mb-4">
+                    <p className="text-amber-700 text-sm">
+                      <AlertTriangle size={16} className="inline-block mr-1" />
+                      A utilizar dados pré-definidos devido a limitações da API OpenAI. Os resultados podem não refletir as posições mais recentes.
+                    </p>
+                  </div>
+                  <Command className="rounded-lg border shadow-md">
+                    <CommandInput placeholder="Filtrar resultados..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum resultado encontrado</CommandEmpty>
+                      <CommandGroup heading="Selecione informações para adicionar">
+                        {searchResults.map((result, index) => (
+                          <CommandItem
+                            key={index}
+                            onSelect={() => setSelectedResult(result)}
+                            className={`flex items-start gap-2 p-2 ${
+                              selectedResult === result ? "bg-accent" : ""
+                            }`}
+                          >
+                            <div className="flex-1">{result}</div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </div>
               )}
             </div>
           )}
