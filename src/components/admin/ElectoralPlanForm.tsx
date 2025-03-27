@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -53,12 +52,14 @@ interface ElectoralPlanFormProps {
   initialData: any;
   onSave: (data: any) => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
 const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
   initialData,
   onSave,
   onCancel,
+  isSubmitting = false,
 }) => {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,9 +69,9 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [promptDialogOpen, setPromptDialogOpen] = useState(false);
 
-  // Convert topics array to comma-separated string for form
+  // Convert from snake_case (from database) to camelCase (for form)
   const defaultValues = {
-    candidateName: initialData.candidateName || "",
+    candidateName: initialData.candidate_name || initialData.candidateName || "",
     party: initialData.party || "",
     summary: initialData.summary || "",
     topics: Array.isArray(initialData.topics) 
@@ -85,12 +86,7 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // Convert comma-separated topics back to array
-    const formattedData = {
-      ...values,
-      topics: values.topics.split(",").map(topic => topic.trim()),
-    };
-    onSave(formattedData);
+    onSave(values);
   };
 
   const getDefaultPrompt = (candidateName: string, partyName: string) => {
@@ -513,13 +509,22 @@ const ElectoralPlanForm: React.FC<ElectoralPlanFormProps> = ({
           />
 
           <div className="flex justify-end gap-3 pt-3">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
               <X size={16} className="mr-2" />
               Cancelar
             </Button>
-            <Button type="submit">
-              <Save size={16} className="mr-2" />
-              Salvar Plano
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save size={16} className="mr-2" />
+                  Salvar Plano
+                </>
+              )}
             </Button>
           </div>
         </form>

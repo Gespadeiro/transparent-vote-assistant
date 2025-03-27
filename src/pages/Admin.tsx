@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,118 +47,135 @@ import {
   Save,
   PlusCircle,
   FileUp,
+  Loader2,
 } from "lucide-react";
 import ElectoralPlanForm from "@/components/admin/ElectoralPlanForm";
 import QuizQuestionForm from "@/components/admin/QuizQuestionForm";
 import AdminAuth from "@/components/admin/AdminAuth";
 import PdfUploadDialog from "@/components/admin/PdfUploadDialog";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock data for demonstration purposes
-const MOCK_PLANS = [
-  {
-    id: 1,
-    candidateName: "Alexandra Johnson",
-    party: "Progressive Party",
-    summary: "Comprehensive healthcare reform and climate action plan.",
-    topics: ["Healthcare", "Environment", "Education"],
-    proposals: "Detailed proposals for universal healthcare and renewable energy investments.",
-    originalPdf: null,
-  },
-  {
-    id: 2,
-    candidateName: "Michael Reynolds",
-    party: "Conservative Alliance",
-    summary: "Tax reform and small government initiatives.",
-    topics: ["Economy", "Defense", "Immigration"],
-    proposals: "Proposals for tax cuts and strengthening border security.",
-    originalPdf: null,
-  },
-];
-
-const MOCK_QUESTIONS = [
-  {
-    id: 1,
-    question: "How should healthcare be managed?",
-    options: [
-      { id: "a", text: "Universal public healthcare system for all citizens", alignment: "progressive" },
-      { id: "b", text: "Mix of public and private healthcare options", alignment: "moderate" },
-      { id: "c", text: "Primarily market-based healthcare with minimal government involvement", alignment: "conservative" }
-    ]
-  },
-  {
-    id: 2,
-    question: "What approach to taxation do you prefer?",
-    options: [
-      { id: "a", text: "Progressive taxation with higher rates for wealthy individuals", alignment: "progressive" },
-      { id: "b", text: "Moderate tax rates with targeted incentives", alignment: "moderate" },
-      { id: "c", text: "Lower tax rates across the board to stimulate economic growth", alignment: "conservative" }
-    ]
-  },
-];
-
-// In a real app, this should be a secure check
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [electoralPlans, setElectoralPlans] = useState(MOCK_PLANS);
-  const [quizQuestions, setQuizQuestions] = useState(MOCK_QUESTIONS);
-  const [editingPlan, setEditingPlan] = useState<any>(null);
-  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [electoralPlans, setElectoralPlans] = useState([]);
+  const [quizQuestions, setQuizQuestions] = useState([]);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [editingQuestion, setEditingQuestion] = useState(null);
   const [activeTab, setActiveTab] = useState("electoral-plans");
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  useEffect(() => {
+    const fetchElectoralPlans = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('electoral_plans')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        setElectoralPlans(data || []);
+      } catch (error) {
+        console.error("Error fetching electoral plans:", error);
+        toast.error("Failed to load electoral plans");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (isAuthenticated) {
+      fetchElectoralPlans();
+    }
+  }, [isAuthenticated]);
 
-  // Authentication handler
-  const handleAuthentication = (success: boolean) => {
+  const handleAuthentication = (success) => {
     setIsAuthenticated(success);
     if (success) {
       toast.success("Successfully authenticated as admin");
     }
   };
 
-  // Electoral plan handlers
-  const handleSavePlan = (planData: any) => {
-    if (editingPlan) {
-      // Update existing plan
-      setElectoralPlans(
-        electoralPlans.map((plan) =>
-          plan.id === editingPlan.id ? { ...planData, id: plan.id } : plan
-        )
-      );
-      toast.success("Electoral plan updated successfully");
-    } else {
-      // Add new plan
-      setElectoralPlans([
-        ...electoralPlans,
-        { ...planData, id: Date.now() }
-      ]);
-      toast.success("New electoral plan added successfully");
+  const handleSavePlan = async (planData) => {
+    setIsSubmitting(true);
+    
+    try {
+      const formattedData = {
+        candidate_name: planData.candidateName || planData.candidate_name,
+        party: planData.party,
+        summary: planData.summary,
+        topics: Array.isArray(planData.topics) ? planData.topics : (typeof planData.topics === 'string' ? planData.topics.split(',').map(t => t.trim()) : []),
+        proposals: planData.proposals,
+        original_pdf: planData.original_pdf || null
+      };
+      
+      if (editingPlan && editingPlan.id) {
+        const { data, error } = await supabase
+          .from('electoral_plans')
+          .update(formattedData)
+          .eq('id', editingPlan.id)
+          .select()
+          .single();
+          
+        if (error) throw error;
+        
+        setElectoralPlans(
+          electoralPlans.map((plan) =>
+            plan.id === editingPlan.id ? data : plan
+          )
+        );
+        toast.success("Electoral plan updated successfully");
+      } else {
+        const { data, error } = await supabase
+          .from('electoral_plans')
+          .insert(formattedData)
+          .select()
+          .single();
+          
+        if (error) throw error;
+        
+        setElectoralPlans([data, ...electoralPlans]);
+        toast.success("New electoral plan added successfully");
+      }
+      setEditingPlan(null);
+    } catch (error) {
+      console.error("Error saving electoral plan:", error);
+      toast.error("Failed to save electoral plan");
+    } finally {
+      setIsSubmitting(false);
     }
-    setEditingPlan(null);
   };
 
-  const handleEditPlan = (plan: any) => {
+  const handleEditPlan = (plan) => {
     setEditingPlan(plan);
     setActiveTab("electoral-plans");
   };
 
-  const handleDeletePlan = (id: number) => {
-    setElectoralPlans(electoralPlans.filter((plan) => plan.id !== id));
-    toast.success("Electoral plan deleted successfully");
+  const handleDeletePlan = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('electoral_plans')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setElectoralPlans(electoralPlans.filter((plan) => plan.id !== id));
+      toast.success("Electoral plan deleted successfully");
+    } catch (error) {
+      console.error("Error deleting electoral plan:", error);
+      toast.error("Failed to delete electoral plan");
+    }
   };
 
-  // PDF processing handler
-  const handlePdfProcessed = (data: any) => {
-    const newPlan = {
-      ...data,
-      id: Date.now(),
-    };
-    
-    setElectoralPlans([...electoralPlans, newPlan]);
+  const handlePdfProcessed = (data) => {
+    setElectoralPlans([data, ...electoralPlans]);
   };
 
-  // Quiz question handlers
-  const handleSaveQuestion = (questionData: any) => {
+  const handleSaveQuestion = (questionData) => {
     if (editingQuestion) {
-      // Update existing question
       setQuizQuestions(
         quizQuestions.map((question) =>
           question.id === editingQuestion.id ? { ...questionData, id: question.id } : question
@@ -167,7 +183,6 @@ const Admin = () => {
       );
       toast.success("Quiz question updated successfully");
     } else {
-      // Add new question
       setQuizQuestions([
         ...quizQuestions,
         { ...questionData, id: Date.now() }
@@ -177,12 +192,12 @@ const Admin = () => {
     setEditingQuestion(null);
   };
 
-  const handleEditQuestion = (question: any) => {
+  const handleEditQuestion = (question) => {
     setEditingQuestion(question);
     setActiveTab("quiz-questions");
   };
 
-  const handleDeleteQuestion = (id: number) => {
+  const handleDeleteQuestion = (id) => {
     setQuizQuestions(quizQuestions.filter((question) => question.id !== id));
     toast.success("Quiz question deleted successfully");
   };
@@ -244,71 +259,83 @@ const Admin = () => {
                       initialData={editingPlan}
                       onSave={handleSavePlan}
                       onCancel={() => setEditingPlan(null)}
+                      isSubmitting={isSubmitting}
                     />
                   ) : (
                     <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Candidate</TableHead>
-                            <TableHead>Party</TableHead>
-                            <TableHead>Summary</TableHead>
-                            <TableHead>Source</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {electoralPlans.map((plan) => (
-                            <TableRow key={plan.id}>
-                              <TableCell className="font-medium">{plan.candidateName}</TableCell>
-                              <TableCell>{plan.party}</TableCell>
-                              <TableCell className="max-w-md truncate">{plan.summary}</TableCell>
-                              <TableCell>
-                                {plan.originalPdf ? (
-                                  <div className="flex items-center gap-1 text-xs">
-                                    <FileText size={14} className="text-red-500" />
-                                    {plan.originalPdf}
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-gray-500">Manual entry</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleEditPlan(plan)}
-                                  >
-                                    <Edit size={16} />
-                                  </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="destructive" size="sm">
-                                        <Trash2 size={16} />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Are you sure you want to delete this electoral plan? This action cannot be undone.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeletePlan(plan.id)}>
-                                          Delete
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              </TableCell>
+                      {isLoading ? (
+                        <div className="flex justify-center items-center py-20">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+                          <p>Loading electoral plans...</p>
+                        </div>
+                      ) : electoralPlans.length === 0 ? (
+                        <div className="text-center py-10 bg-gray-50 rounded-md">
+                          <p className="text-gray-500">No electoral plans found. Add your first plan.</p>
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Candidate</TableHead>
+                              <TableHead>Party</TableHead>
+                              <TableHead>Summary</TableHead>
+                              <TableHead>Source</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {electoralPlans.map((plan) => (
+                              <TableRow key={plan.id}>
+                                <TableCell className="font-medium">{plan.candidate_name}</TableCell>
+                                <TableCell>{plan.party}</TableCell>
+                                <TableCell className="max-w-md truncate">{plan.summary}</TableCell>
+                                <TableCell>
+                                  {plan.original_pdf ? (
+                                    <div className="flex items-center gap-1 text-xs">
+                                      <FileText size={14} className="text-red-500" />
+                                      {plan.original_pdf}
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-gray-500">Manual entry</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleEditPlan(plan)}
+                                    >
+                                      <Edit size={16} />
+                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm">
+                                          <Trash2 size={16} />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to delete this electoral plan? This action cannot be undone.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDeletePlan(plan.id)}>
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
                     </div>
                   )}
                 </TabsContent>
