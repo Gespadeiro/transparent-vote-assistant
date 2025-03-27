@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -65,6 +66,7 @@ const Admin = () => {
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(false);
   
   useEffect(() => {
     const fetchElectoralPlans = async () => {
@@ -88,8 +90,51 @@ const Admin = () => {
     
     if (isAuthenticated) {
       fetchElectoralPlans();
+      fetchQuizQuestions();
     }
   }, [isAuthenticated]);
+
+  const fetchQuizQuestions = async () => {
+    setIsLoadingQuizzes(true);
+    try {
+      // First, get all quiz questions
+      const { data: questions, error: questionsError } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (questionsError) throw questionsError;
+      
+      if (!questions || questions.length === 0) {
+        setQuizQuestions([]);
+        return;
+      }
+      
+      // Then, for each question, get its options
+      const questionsWithOptions = await Promise.all(
+        questions.map(async (question) => {
+          const { data: options, error: optionsError } = await supabase
+            .from('quiz_options')
+            .select('*')
+            .eq('question_id', question.id);
+            
+          if (optionsError) throw optionsError;
+          
+          return {
+            ...question,
+            options: options || []
+          };
+        })
+      );
+      
+      setQuizQuestions(questionsWithOptions);
+    } catch (error) {
+      console.error("Error fetching quiz questions:", error);
+      toast.error("Failed to load quiz questions");
+    } finally {
+      setIsLoadingQuizzes(false);
+    }
+  };
 
   const handleAuthentication = (success) => {
     setIsAuthenticated(success);
@@ -174,22 +219,22 @@ const Admin = () => {
     setElectoralPlans([data, ...electoralPlans]);
   };
 
-  const handleSaveQuestion = (questionData) => {
-    if (editingQuestion) {
+  const handleSaveQuestion = async (questionData) => {
+    // The actual saving now happens in the QuizQuestionForm component
+    // Here we just update the local state
+    if (editingQuestion && editingQuestion.id) {
       setQuizQuestions(
         quizQuestions.map((question) =>
-          question.id === editingQuestion.id ? { ...questionData, id: question.id } : question
+          question.id === questionData.id ? questionData : question
         )
       );
-      toast.success("Quiz question updated successfully");
     } else {
-      setQuizQuestions([
-        ...quizQuestions,
-        { ...questionData, id: Date.now() }
-      ]);
-      toast.success("New quiz question added successfully");
+      setQuizQuestions([questionData, ...quizQuestions]);
     }
     setEditingQuestion(null);
+    
+    // Refresh the questions from the database to ensure we have the latest data
+    fetchQuizQuestions();
   };
 
   const handleEditQuestion = (question) => {
@@ -197,9 +242,31 @@ const Admin = () => {
     setActiveTab("quiz-questions");
   };
 
-  const handleDeleteQuestion = (id) => {
-    setQuizQuestions(quizQuestions.filter((question) => question.id !== id));
-    toast.success("Quiz question deleted successfully");
+  const handleDeleteQuestion = async (id) => {
+    try {
+      // First delete the options
+      const { error: optionsError } = await supabase
+        .from('quiz_options')
+        .delete()
+        .eq('question_id', id);
+        
+      if (optionsError) throw optionsError;
+      
+      // Then delete the question
+      const { error: questionError } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .eq('id', id);
+        
+      if (questionError) throw questionError;
+      
+      // Update the local state
+      setQuizQuestions(quizQuestions.filter((question) => question.id !== id));
+      toast.success("Quiz question deleted successfully");
+    } catch (error) {
+      console.error("Error deleting quiz question:", error);
+      toast.error("Failed to delete quiz question");
+    }
   };
 
   return (
@@ -357,56 +424,67 @@ const Admin = () => {
                     />
                   ) : (
                     <div className="space-y-6">
-                      {quizQuestions.map((question) => (
-                        <div key={question.id} className="neo-card p-6">
-                          <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-lg font-medium">{question.question}</h3>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEditQuestion(question)}
-                              >
-                                <Edit size={16} />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="destructive" size="sm">
-                                    <Trash2 size={16} />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete this quiz question? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteQuestion(question.id)}>
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                      {isLoadingQuizzes ? (
+                        <div className="flex justify-center items-center py-20">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+                          <p>Loading quiz questions...</p>
+                        </div>
+                      ) : quizQuestions.length === 0 ? (
+                        <div className="text-center py-10 bg-gray-50 rounded-md">
+                          <p className="text-gray-500">No quiz questions found. Add your first question.</p>
+                        </div>
+                      ) : (
+                        quizQuestions.map((question) => (
+                          <div key={question.id} className="neo-card p-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <h3 className="text-lg font-medium">{question.question}</h3>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditQuestion(question)}
+                                >
+                                  <Edit size={16} />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="sm">
+                                      <Trash2 size={16} />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete this quiz question? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteQuestion(question.id)}>
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+                            <div className="pl-4 border-l-2 border-gray-200 mt-3">
+                              <ul className="space-y-2">
+                                {question.options.map((option) => (
+                                  <li key={option.id} className="flex items-start gap-2">
+                                    <span className="font-medium">{option.option_id})</span>
+                                    <div>
+                                      <p>{option.text}</p>
+                                      <p className="text-xs text-gray-500">Alignment: {option.alignment}</p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
                           </div>
-                          <div className="pl-4 border-l-2 border-gray-200 mt-3">
-                            <ul className="space-y-2">
-                              {question.options.map((option: any) => (
-                                <li key={option.id} className="flex items-start gap-2">
-                                  <span className="font-medium">{option.id})</span>
-                                  <div>
-                                    <p>{option.text}</p>
-                                    <p className="text-xs text-gray-500">Alignment: {option.alignment}</p>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   )}
                 </TabsContent>

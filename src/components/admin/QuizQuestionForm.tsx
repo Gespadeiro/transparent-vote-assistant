@@ -16,6 +16,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { X, Save, PlusCircle, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const optionSchema = z.object({
   id: z.string().min(1, "Option ID is required"),
@@ -47,6 +49,7 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
       { id: "c", text: "", alignment: "conservative" },
     ]
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,8 +87,67 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
     setOptions(newOptions);
   };
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    onSave(values);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
+    try {
+      let questionId = initialData.id;
+      
+      // If it's a new question, insert it first
+      if (!questionId) {
+        const { data: questionData, error: questionError } = await supabase
+          .from('quiz_questions')
+          .insert({ question: values.question })
+          .select('id')
+          .single();
+          
+        if (questionError) throw questionError;
+        questionId = questionData.id;
+      } else {
+        // Update existing question
+        const { error: updateError } = await supabase
+          .from('quiz_questions')
+          .update({ question: values.question })
+          .eq('id', questionId);
+          
+        if (updateError) throw updateError;
+        
+        // Delete existing options to replace them
+        const { error: deleteError } = await supabase
+          .from('quiz_options')
+          .delete()
+          .eq('question_id', questionId);
+          
+        if (deleteError) throw deleteError;
+      }
+      
+      // Insert all options
+      const optionsToInsert = values.options.map(option => ({
+        question_id: questionId,
+        option_id: option.id,
+        text: option.text,
+        alignment: option.alignment
+      }));
+      
+      const { error: optionsError } = await supabase
+        .from('quiz_options')
+        .insert(optionsToInsert);
+        
+      if (optionsError) throw optionsError;
+      
+      // Return the full data structure to the parent component
+      onSave({
+        id: questionId,
+        question: values.question,
+        options: values.options
+      });
+      
+      toast.success("Quiz question saved successfully");
+    } catch (error) {
+      console.error("Error saving quiz question:", error);
+      toast.error("Failed to save quiz question");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -180,13 +242,22 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-3">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             <X size={16} className="mr-2" />
             Cancel
           </Button>
-          <Button type="submit">
-            <Save size={16} className="mr-2" />
-            Save Question
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <span className="mr-2">Saving...</span>
+                <span className="animate-spin">⏳</span>
+              </>
+            ) : (
+              <>
+                <Save size={16} className="mr-2" />
+                Save Question
+              </>
+            )}
           </Button>
         </div>
       </form>
