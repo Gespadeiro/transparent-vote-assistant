@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 interface ChatMessage {
@@ -28,8 +27,8 @@ export const getChatCompletion = async (
   previousMessages: ChatMessage[] = []
 ): Promise<string> => {
   try {
-    // Get API key from localStorage
-    const apiKey = localStorage.getItem("openai_api_key");
+    // Your predefined API key - replace this with your actual OpenAI API key
+    const apiKey = "your-openai-api-key-here"; // Replace this with your actual API key
     
     // Prepare the messages for the API
     const messages: ChatMessage[] = [
@@ -41,11 +40,8 @@ export const getChatCompletion = async (
       { role: "user", content: prompt }
     ];
 
-    // If no API key is available, use mock response
-    if (!apiKey) {
-      console.warn("No OpenAI API key provided. Using mock response.");
-      return getMockResponse(prompt);
-    }
+    // If using mock responses for testing, uncomment this
+    // return getMockResponse(prompt);
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -71,11 +67,13 @@ export const getChatCompletion = async (
   } catch (error) {
     console.error("Error getting chat completion:", error);
     toast.error("Failed to get a response from the AI. Please try again.");
-    throw error;
+    
+    // Return a fallback response when the API call fails
+    return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again in a moment.";
   }
 };
 
-// Provides mock responses when no API key is available
+// Provides mock responses when needed for testing
 const getMockResponse = (prompt: string): string => {
   const normalizedPrompt = prompt.toLowerCase();
   

@@ -10,21 +10,10 @@ import {
   Loader2, 
   MessageSquare,
   ThumbsUp,
-  ThumbsDown,
-  AlertCircle
+  ThumbsDown
 } from "lucide-react";
 import { getChatCompletion } from "@/services/openai";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerClose,
-} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 // Message types
 interface Message {
@@ -48,17 +37,7 @@ const Chatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKeyDrawerOpen, setApiKeyDrawerOpen] = useState(false);
-  const [apiKey, setApiKey] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Load API key from localStorage on component mount
-  useEffect(() => {
-    const savedApiKey = localStorage.getItem("openai_api_key");
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-    }
-  }, []);
   
   // Add initial welcome message when component mounts
   useEffect(() => {
@@ -175,13 +154,6 @@ const Chatbot = () => {
       setIsLoading(false);
     }
   };
-  
-  const handleApiKeySave = () => {
-    if (apiKey.trim()) {
-      localStorage.setItem("openai_api_key", apiKey);
-      setApiKeyDrawerOpen(false);
-    }
-  };
 
   return (
     <div className="min-h-screen pb-20 bg-gray-50 dark:bg-gray-900">
@@ -232,17 +204,6 @@ const Chatbot = () => {
                       and candidates. Responses are generated using AI and may be refined over time.
                     </p>
                   </div>
-                </div>
-                
-                <div className="mt-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={() => setApiKeyDrawerOpen(true)}
-                  >
-                    <AlertCircle size={16} className="mr-2" />
-                    Configure API Key
-                  </Button>
                 </div>
               </div>
             </div>
@@ -386,52 +347,6 @@ const Chatbot = () => {
           </div>
         </div>
       </section>
-      
-      {/* API Key Configuration Drawer */}
-      <Drawer open={apiKeyDrawerOpen} onOpenChange={setApiKeyDrawerOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Configure OpenAI API Key</DrawerTitle>
-            <DrawerDescription>
-              Enter your OpenAI API key to enable the AI-powered chat assistant. 
-              Your key will be stored locally in your browser.
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="p-4 space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="apiKey" className="text-sm font-medium">
-                OpenAI API Key
-              </label>
-              <Input
-                id="apiKey"
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-..."
-                className="w-full"
-              />
-              <p className="text-xs text-gray-500">
-                Your API key is stored locally and never sent to our servers.
-                You can get an API key from the{" "}
-                <a 
-                  href="https://platform.openai.com/api-keys" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-election-blue hover:underline"
-                >
-                  OpenAI dashboard
-                </a>.
-              </p>
-            </div>
-          </div>
-          <DrawerFooter>
-            <Button onClick={handleApiKeySave}>Save API Key</Button>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
     </div>
   );
 };
