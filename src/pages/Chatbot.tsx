@@ -10,8 +10,21 @@ import {
   Loader2, 
   MessageSquare,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  AlertCircle
 } from "lucide-react";
+import { getChatCompletion } from "@/services/openai";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // Message types
 interface Message {
@@ -31,32 +44,21 @@ const SUGGESTED_QUESTIONS = [
   "What are the main environmental proposals?"
 ];
 
-// Mock responses
-const BOT_RESPONSES: Record<string, string> = {
-  "How does the electoral process work?": 
-    "The electoral process involves several stages: voter registration, candidate nomination, campaigning, voting, and result declaration. Each citizen aged 18 and above can register to vote. Elections are held on scheduled dates where voters cast ballots for their preferred candidates. The votes are then counted, and winners are declared according to the electoral system in place.",
-  
-  "What are the main policy differences between candidates?": 
-    "The main policy differences between candidates typically revolve around approaches to economy, healthcare, education, and environment. Progressive candidates generally advocate for expanded public services and stronger regulations, while conservative candidates often support smaller government and free-market solutions. Centrist candidates typically seek balanced approaches that incorporate elements from both perspectives.",
-  
-  "When is the next election day?": 
-    "The next election is scheduled for November 5, 2024. This will be a general election for national and state offices. Polls will be open from 7:00 AM to 8:00 PM in most locations. Early voting options may be available in your area starting two weeks before election day.",
-  
-  "What documents do I need to vote?": 
-    "To vote, you typically need a government-issued photo ID such as a driver's license, passport, or voter identification card. Requirements vary by jurisdiction, so it's best to check with your local election office. Some locations also accept utility bills, bank statements, or government checks as proof of identity and residence.",
-  
-  "How can I check my voter registration status?": 
-    "You can check your voter registration status through your state's election website, or through national resources like vote.org. You'll need to provide basic information such as your name, date of birth, and address. If you find you're not registered, many states offer online registration options.",
-  
-  "What are the main environmental proposals?": 
-    "The main environmental proposals from candidates include approaches to climate change, conservation, and sustainable development. Progressive candidates typically support aggressive carbon reduction targets, renewable energy investments, and stronger environmental regulations. Conservative candidates often favor market-based solutions and balancing environmental protection with economic growth. All major candidates acknowledge the importance of clean air and water protections."
-};
-
 const Chatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKeyDrawerOpen, setApiKeyDrawerOpen] = useState(false);
+  const [apiKey, setApiKey] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Load API key from localStorage on component mount
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem("openai_api_key");
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+  }, []);
   
   // Add initial welcome message when component mounts
   useEffect(() => {
@@ -75,7 +77,7 @@ const Chatbot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
   
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!inputValue.trim()) return;
@@ -92,21 +94,42 @@ const Chatbot = () => {
     setInputValue("");
     setIsLoading(true);
     
-    // Simulate bot response after a delay
-    setTimeout(() => {
+    try {
+      // Convert previous messages to format needed for OpenAI
+      const previousMessages = messages
+        .filter(msg => msg.id !== "welcome") // Skip welcome message
+        .map(msg => ({
+          role: msg.type === "user" ? "user" : "assistant",
+          content: msg.text
+        }));
+      
+      // Get response from OpenAI
+      const response = await getChatCompletion(inputValue, previousMessages as any);
+      
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        text: getBotResponse(userMessage.text),
+        text: response,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error in chat:", error);
+      // Add error message
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "bot",
+        text: "Sorry, I couldn't process your request. Please try again later.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
   
-  const handleSuggestedQuestion = (question: string) => {
+  const handleSuggestedQuestion = async (question: string) => {
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -118,40 +141,46 @@ const Chatbot = () => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     
-    // Simulate bot response after a delay
-    setTimeout(() => {
+    try {
+      // Convert previous messages to format needed for OpenAI
+      const previousMessages = messages
+        .filter(msg => msg.id !== "welcome") // Skip welcome message
+        .map(msg => ({
+          role: msg.type === "user" ? "user" : "assistant",
+          content: msg.text
+        }));
+      
+      // Get response from OpenAI
+      const response = await getChatCompletion(question, previousMessages as any);
+      
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        text: getBotResponse(question),
+        text: response,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error in chat:", error);
+      // Add error message
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "bot",
+        text: "Sorry, I couldn't process your request. Please try again later.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
   
-  // Get bot response based on user input
-  const getBotResponse = (userInput: string): string => {
-    const normalizedInput = userInput.toLowerCase().trim();
-    
-    // Check for exact matches in our mock responses
-    for (const question in BOT_RESPONSES) {
-      if (normalizedInput === question.toLowerCase()) {
-        return BOT_RESPONSES[question];
-      }
+  const handleApiKeySave = () => {
+    if (apiKey.trim()) {
+      localStorage.setItem("openai_api_key", apiKey);
+      setApiKeyDrawerOpen(false);
     }
-    
-    // Check for partial matches
-    for (const question in BOT_RESPONSES) {
-      if (normalizedInput.includes(question.toLowerCase().split(" ")[0])) {
-        return BOT_RESPONSES[question];
-      }
-    }
-    
-    // Default response if no match is found
-    return "I don't have specific information on that topic yet. I'm continuously learning to provide better answers about the election process and candidates. Feel free to try another question or check back later.";
   };
 
   return (
@@ -203,6 +232,17 @@ const Chatbot = () => {
                       and candidates. Responses are generated using AI and may be refined over time.
                     </p>
                   </div>
+                </div>
+                
+                <div className="mt-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => setApiKeyDrawerOpen(true)}
+                  >
+                    <AlertCircle size={16} className="mr-2" />
+                    Configure API Key
+                  </Button>
                 </div>
               </div>
             </div>
@@ -346,6 +386,52 @@ const Chatbot = () => {
           </div>
         </div>
       </section>
+      
+      {/* API Key Configuration Drawer */}
+      <Drawer open={apiKeyDrawerOpen} onOpenChange={setApiKeyDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Configure OpenAI API Key</DrawerTitle>
+            <DrawerDescription>
+              Enter your OpenAI API key to enable the AI-powered chat assistant. 
+              Your key will be stored locally in your browser.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4 space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="apiKey" className="text-sm font-medium">
+                OpenAI API Key
+              </label>
+              <Input
+                id="apiKey"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="sk-..."
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500">
+                Your API key is stored locally and never sent to our servers.
+                You can get an API key from the{" "}
+                <a 
+                  href="https://platform.openai.com/api-keys" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-election-blue hover:underline"
+                >
+                  OpenAI dashboard
+                </a>.
+              </p>
+            </div>
+          </div>
+          <DrawerFooter>
+            <Button onClick={handleApiKeySave}>Save API Key</Button>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
