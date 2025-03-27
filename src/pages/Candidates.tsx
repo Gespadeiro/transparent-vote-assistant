@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import { 
@@ -8,38 +8,27 @@ import {
   FileText, 
   TrendingUp, 
   MessageCircle, 
-  Search
+  Search,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-const MOCK_CANDIDATES = [
-  {
-    id: 1,
-    name: "António Costa",
-    party: "Partido Socialista",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
-    sentiment: { positive: 65, neutral: 25, negative: 10 },
-    topics: ["Saúde", "Educação", "Ambiente", "Economia"],
-    summary: "Defende um sistema de saúde universal, aumento do financiamento à educação e ações mais agressivas contra as alterações climáticas. Propõe impostos mais altos para empresas e indivíduos ricos."
-  },
-  {
-    id: 2,
-    name: "Luís Montenegro",
-    party: "Partido Social Democrata",
-    image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
-    sentiment: { positive: 55, neutral: 30, negative: 15 },
-    topics: ["Economia", "Segurança", "Imigração", "Reforma Fiscal"],
-    summary: "Foca no crescimento económico através de desregulamentação e cortes de impostos. Defende maior segurança nas fronteiras e um sistema de imigração baseado em mérito."
-  },
-  {
-    id: 3,
-    name: "Mariana Mortágua",
-    party: "Bloco de Esquerda",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
-    sentiment: { positive: 70, neutral: 20, negative: 10 },
-    topics: ["Unidade", "Saúde", "Infraestrutura", "Educação"],
-    summary: "Promove soluções para reforma do sistema de saúde e investimento em infraestrutura. Busca políticas moderadas que apelem a eleitores de todo o espectro político."
-  }
-];
+interface Sentiment {
+  positive: number;
+  neutral: number;
+  negative: number;
+}
+
+interface Candidate {
+  id: string;
+  candidate_name: string;
+  party: string;
+  image_url?: string;
+  summary: string | null;
+  topics: string[];
+  sentiment?: Sentiment;
+}
 
 interface SentimentBarProps {
   value: number;
@@ -63,16 +52,64 @@ const SentimentBar: React.FC<SentimentBarProps> = ({ value, color, label }) => {
 };
 
 const Candidates = () => {
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("Todos");
+  const [isLoading, setIsLoading] = useState(true);
   
-  const topics = ["Todos", "Economia", "Saúde", "Educação", "Ambiente", "Segurança", "Imigração"];
+  // Collect all unique topics from candidates
+  const allTopics = ["Todos"];
+  candidates.forEach(candidate => {
+    if (candidate.topics && Array.isArray(candidate.topics)) {
+      candidate.topics.forEach(topic => {
+        if (!allTopics.includes(topic)) {
+          allTopics.push(topic);
+        }
+      });
+    }
+  });
   
-  const filteredCandidates = MOCK_CANDIDATES.filter(candidate => {
-    const matchesSearch = candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  useEffect(() => {
+    async function fetchCandidates() {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('electoral_plans')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        // Transform the data to match our Candidate interface
+        const formattedCandidates = data.map(plan => ({
+          id: plan.id,
+          candidate_name: plan.candidate_name,
+          party: plan.party,
+          image_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80", // Default image
+          summary: plan.summary,
+          topics: Array.isArray(plan.topics) ? plan.topics : typeof plan.topics === 'string' ? JSON.parse(plan.topics) : [],
+          sentiment: { positive: 65, neutral: 25, negative: 10 } // Default sentiment
+        }));
+        
+        setCandidates(formattedCandidates);
+      } catch (error) {
+        console.error("Error fetching candidates:", error);
+        toast.error("Failed to load candidates");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchCandidates();
+  }, []);
+  
+  const filteredCandidates = candidates.filter(candidate => {
+    const matchesSearch = candidate.candidate_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           candidate.party.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesTopic = selectedTopic === "Todos" || candidate.topics.includes(selectedTopic);
+    const matchesTopic = selectedTopic === "Todos" || 
+                         (candidate.topics && Array.isArray(candidate.topics) && 
+                          candidate.topics.includes(selectedTopic));
     
     return matchesSearch && matchesTopic;
   });
@@ -114,7 +151,7 @@ const Candidates = () => {
               </div>
               
               <div className="flex overflow-x-auto py-1 gap-2 no-scrollbar">
-                {topics.map(topic => (
+                {allTopics.map(topic => (
                   <button
                     key={topic}
                     onClick={() => setSelectedTopic(topic)}
@@ -136,7 +173,12 @@ const Candidates = () => {
       {/* Candidates Grid */}
       <section className="px-6">
         <div className="container mx-auto">
-          {filteredCandidates.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-election-blue mr-2" />
+              <p>Carregando candidatos...</p>
+            </div>
+          ) : filteredCandidates.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredCandidates.map((candidate, index) => (
                 <motion.div
@@ -148,15 +190,15 @@ const Candidates = () => {
                 >
                   <div className="flex items-start space-x-4 mb-6">
                     <img 
-                      src={candidate.image} 
-                      alt={candidate.name} 
+                      src={candidate.image_url} 
+                      alt={candidate.candidate_name} 
                       className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
                     />
                     <div>
-                      <h3 className="text-xl font-semibold">{candidate.name}</h3>
+                      <h3 className="text-xl font-semibold">{candidate.candidate_name}</h3>
                       <p className="text-sm text-gray-500">{candidate.party}</p>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {candidate.topics.slice(0, 2).map(topic => (
+                        {candidate.topics && Array.isArray(candidate.topics) && candidate.topics.slice(0, 2).map(topic => (
                           <span 
                             key={topic} 
                             className="text-xs bg-blue-50 text-election-blue px-2 py-1 rounded-full"
@@ -164,7 +206,7 @@ const Candidates = () => {
                             {topic}
                           </span>
                         ))}
-                        {candidate.topics.length > 2 && (
+                        {candidate.topics && Array.isArray(candidate.topics) && candidate.topics.length > 2 && (
                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
                             +{candidate.topics.length - 2}
                           </span>
@@ -181,29 +223,31 @@ const Candidates = () => {
                     <p className="text-sm text-gray-600">{candidate.summary}</p>
                   </div>
                   
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium flex items-center mb-3">
-                      <BarChart3 size={16} className="mr-2 text-election-blue" />
-                      Análise de Sentimento
-                    </h4>
-                    <div className="space-y-2">
-                      <SentimentBar 
-                        value={candidate.sentiment.positive} 
-                        color="bg-green-400" 
-                        label="Positivo" 
-                      />
-                      <SentimentBar 
-                        value={candidate.sentiment.neutral} 
-                        color="bg-gray-400" 
-                        label="Neutro" 
-                      />
-                      <SentimentBar 
-                        value={candidate.sentiment.negative} 
-                        color="bg-red-400" 
-                        label="Negativo" 
-                      />
+                  {candidate.sentiment && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-medium flex items-center mb-3">
+                        <BarChart3 size={16} className="mr-2 text-election-blue" />
+                        Análise de Sentimento
+                      </h4>
+                      <div className="space-y-2">
+                        <SentimentBar 
+                          value={candidate.sentiment.positive} 
+                          color="bg-green-400" 
+                          label="Positivo" 
+                        />
+                        <SentimentBar 
+                          value={candidate.sentiment.neutral} 
+                          color="bg-gray-400" 
+                          label="Neutro" 
+                        />
+                        <SentimentBar 
+                          value={candidate.sentiment.negative} 
+                          color="bg-red-400" 
+                          label="Negativo" 
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   
                   <div className="flex justify-end mt-4">
                     <button className="text-sm text-election-blue hover:underline flex items-center">
@@ -219,7 +263,8 @@ const Candidates = () => {
               <User size={48} className="mx-auto mb-4 text-gray-300" />
               <h3 className="text-xl font-medium mb-2">Nenhum candidato encontrado</h3>
               <p className="text-gray-500">
-                Tente ajustar sua pesquisa ou filtros para encontrar candidatos.
+                Tente ajustar sua pesquisa ou filtros para encontrar candidatos. 
+                Ou peça ao administrador para adicionar novos candidatos.
               </p>
             </div>
           )}
